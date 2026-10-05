@@ -7,5 +7,7 @@ __pycache__/
 env/
 venv/
 staticfiles/
+data_dump.json
+scratch/
 .DS_Store
 Thumbs.db
