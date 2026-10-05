@@ -82,6 +82,17 @@ TIME_ZONE = 'Asia/Jakarta'
 USE_I18N = True
 USE_TZ = True
 
+# Cookie-based Sessions for Stateless / Serverless Deployments (Vercel)
+# Stores session in cryptographically signed browser cookie so login persists across serverless lambda instances!
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+SESSION_COOKIE_NAME = 'serba10ribu_session'
+SESSION_COOKIE_AGE = 1209600  # 14 days
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']

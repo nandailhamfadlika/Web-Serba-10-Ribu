@@ -1196,6 +1196,31 @@
             color: #0f172a !important;
             margin-bottom: 16px !important;
         }
+
+        /* Clean Standalone Centered Layout for Login Page */
+        body.login {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 100vh !important;
+            background: #f8fafc !important;
+            padding: 1rem !important;
+        }
+        body.login header,
+        body.login aside#admin-sidebar,
+        body.login #sidebar-backdrop,
+        body.login .sticky.top-0,
+        body.login #mobile-menu-toggle {
+            display: none !important;
+        }
+        body.login main,
+        body.login #content {
+            width: 100% !important;
+            max-width: 440px !important;
+            padding: 0 !important;
+            margin: auto !important;
+        }
     </style>
 
     {% block extrahead %}{% endblock %}
