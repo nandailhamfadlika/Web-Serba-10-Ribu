@@ -54,9 +54,18 @@ elif DB_NAME and DB_USER:
         }
     }
 else:
+    db_path = BASE_DIR / 'db.sqlite3'
+    if 'VERCEL' in os.environ:
+        import shutil
+        tmp_db = Path('/tmp/db.sqlite3')
+        if not tmp_db.exists() and db_path.exists():
+            shutil.copy2(db_path, tmp_db)
+        if tmp_db.exists():
+            db_path = tmp_db
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': db_path,
         }
     }
