@@ -1,0 +1,372 @@
+{% extends 'admin/admin_base.html' %}
+{% load static %}
+
+{% block title %}Fast In-Take POS | Serba 10 Ribu {{ selected_branch.name }}{% endblock %}
+
+{% block content %}
+<div id="pos-intake-app" data-branch-slug="{{ selected_branch.slug }}">
+
+<!-- Top Operational Sub-header -->
+<section class="bg-white border-b border-slate-200 py-4 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            <!-- Title & Operational Window -->
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-brand-50 text-brand-900 border border-brand-200">
+                        ⚡ FAST IN-TAKE POS
+                    </span>
+                    <span class="text-xs text-slate-500 font-semibold">
+                        Sesi Pagi (Subuh - 08:00 WIB)
+                    </span>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
+                    Serah Terima Drop Barang Masuk: {{ selected_branch.name }}
+                </h1>
+            </div>
+
+            <!-- Branch Toggle & Date Status -->
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                    {% for b in branches %}
+                    <a href="?branch={{ b.slug }}" 
+                       class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all min-h-[36px] flex items-center
+                       {% if b.slug == selected_branch.slug %}
+                           bg-brand-600 text-white shadow-sm
+                       {% else %}
+                           text-slate-600 hover:text-slate-900
+                       {% endif %}">
+                        {{ b.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+                <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200 min-h-[36px] flex items-center">
+                    📅 {{ today|date:"d M Y" }}
+                </span>
+            </div>
+
+        </div>
+
+        <!-- Morning Operational Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-100">
+            <div class="bg-red-50/60 border border-red-200/80 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-brand-800 uppercase tracking-wider">Total Porsi Masuk</div>
+                    <div class="text-xl font-black text-slate-900">{{ total_porsi }} <span class="text-xs font-medium text-slate-500">pcs</span></div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-brand-500/20 text-brand-700 flex items-center justify-center font-bold text-lg">
+                    📦
+                </div>
+            </div>
+
+            <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Mitra Sudah Drop</div>
+                    <div class="text-xl font-black text-slate-900">{{ total_mitra }} <span class="text-xs font-medium text-slate-500">mitra</span></div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-700 flex items-center justify-center font-bold text-lg">
+                    👥
+                </div>
+            </div>
+
+            <div class="bg-blue-50/60 border border-blue-200/80 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-blue-800 uppercase tracking-wider">Estimasi Nilai Barang</div>
+                    <div class="text-xl font-black text-slate-900">Rp {{ total_nominal_rp|default:"0"|floatformat:"0" }}</div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-700 flex items-center justify-center font-bold text-lg">
+                    💰
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Feedback Messages -->
+{% if messages %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+    {% for message in messages %}
+    <div class="p-3.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between shadow-sm
+        {% if message.tags == 'success' %}
+            bg-emerald-50 text-emerald-800 border border-emerald-300
+        {% else %}
+            bg-rose-50 text-rose-800 border border-rose-300
+        {% endif %}">
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Main POS Workplace Layout -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Fast In-Take POS Entry Form (5 Cols) -->
+        <div class="lg:col-span-5">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/60 border border-slate-200 lg:sticky lg:top-20">
+                
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                        <span>📝 Form Terima Barang</span>
+                    </h2>
+                    <span class="text-[11px] font-semibold text-slate-500">
+                        {{ selected_branch.name }}
+                    </span>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+
+                    <!-- 1. Mitra UMKM Selection -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-bold text-slate-700">
+                                1. Pilih Mitra UMKM <span class="text-rose-500">*</span>
+                            </label>
+                            <button type="button" id="btn-open-modal-mitra"
+                                    class="text-[11px] font-bold text-brand-700 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg transition-colors border border-brand-200">
+                                + Tambah Mitra Baru
+                            </button>
+                        </div>
+                        
+                        {{ form.partner }}
+                    </div>
+
+                    <!-- 2. Menu Makanan Selection -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-bold text-slate-700">
+                                2. Pilih Menu Kuliner <span class="text-rose-500">*</span>
+                            </label>
+                            <button type="button" id="btn-toggle-new-menu"
+                                    class="text-[11px] font-semibold text-slate-500 hover:text-brand-600">
+                                + Menu Baru Lainnya
+                            </button>
+                        </div>
+                        {{ form.product }}
+
+                        <!-- Input Menu Baru On-The-Fly -->
+                        <div id="new-menu-container" class="hidden mt-2 p-3 bg-brand-50/60 rounded-xl border border-brand-200 space-y-2">
+                            <div class="text-[11px] font-bold text-brand-900">
+                                💡 Tambah Menu Baru Untuk Mitra Ini:
+                            </div>
+                            {{ form.new_product_name }}
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Kategori Menu:</label>
+                                {{ form.new_product_category }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Kuantitas Barang Masuk (Pcs) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            3. Jumlah Kuantitas Masuk (Pcs) <span class="text-rose-500">*</span>
+                        </label>
+                        {{ form.stock_in }}
+
+                        <!-- Stepper Quick Touch Pills -->
+                        <div class="grid grid-cols-4 gap-1.5 mt-2">
+                            <button type="button" data-step="-5" class="stepper-btn text-xs font-bold py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 transition-colors">
+                                -5
+                            </button>
+                            <button type="button" data-step="-1" class="stepper-btn text-xs font-bold py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 transition-colors">
+                                -1
+                            </button>
+                            <button type="button" data-step="5" class="stepper-btn text-xs font-bold py-2 bg-brand-50 hover:bg-brand-100 text-brand-800 rounded-lg transition-colors border border-brand-200">
+                                +5
+                            </button>
+                            <button type="button" data-step="10" class="stepper-btn text-xs font-bold py-2 bg-brand-100 hover:bg-brand-200 text-brand-900 rounded-lg transition-colors border border-brand-300">
+                                +10
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4. Upload Bukti Serah Terima Kamera Foto Fisik -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            4. Foto Bukti Serah Terima Fisik (Retensi H+7)
+                        </label>
+                        
+                        <label for="input-proof-photo" 
+                               class="cursor-pointer flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-2xl p-4 text-center bg-slate-50 hover:bg-brand-50/50 transition-colors">
+                            <div class="text-2xl mb-1">📸</div>
+                            <span id="photo-upload-label" class="text-xs font-bold text-slate-700">
+                                Klik untuk Buka Kamera / Pilih Foto
+                            </span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">
+                                Bukti fisik otomatis dibersihkan pada H+7
+                            </span>
+                        </label>
+                        {{ form.proof_photo }}
+
+                        <!-- Preview Thumbnail -->
+                        <div id="photo-preview-container" class="hidden mt-2 p-2 bg-slate-100 rounded-xl flex items-center gap-3">
+                            <img id="photo-preview-img" class="w-12 h-12 object-cover rounded-lg border border-slate-300" src="" alt="Preview Bukti">
+                            <span class="text-xs text-slate-600 font-medium">Foto siap diupload bersama data in-take</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-2xl shadow-lg shadow-brand-600/30 transition-all text-sm flex items-center justify-center gap-2 min-h-[48px]">
+                        <span>✓ Simpan In-Take Barang</span>
+                    </button>
+
+                </form>
+
+            </div>
+        </div>
+
+        <!-- Right Column: Live In-Take Feed Hari Ini (7 Cols) -->
+        <div class="lg:col-span-7">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/60 border border-slate-200">
+                
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-base font-extrabold text-slate-900">
+                            📋 Riwayat In-Take Pagi Ini
+                        </h2>
+                        <p class="text-xs text-slate-500">
+                            {{ today_intakes|length }} catatan transaksi masuk hari ini
+                        </p>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                        Live Subuh Feed
+                    </span>
+                </div>
+
+                {% if today_intakes %}
+                <div class="space-y-3">
+                    {% for item in today_intakes %}
+                    <div class="p-3.5 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-amber-50/40 transition-colors flex items-center justify-between gap-3">
+                        
+                        <div class="flex items-center gap-3">
+                            <!-- Thumbnail / Icon -->
+                            <div class="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                {% if item.proof_photo %}
+                                    <a href="{{ item.proof_photo.url }}" target="_blank">
+                                        <img src="{{ item.proof_photo.url }}" class="w-full h-full object-cover" alt="Bukti">
+                                    </a>
+                                {% else %}
+                                    <span class="text-lg">🍱</span>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <div class="font-extrabold text-slate-900 text-sm leading-tight">
+                                    {{ item.product.name }}
+                                </div>
+                                <div class="text-xs text-brand-700 font-semibold">
+                                    Mitra: {{ item.partner.name }}
+                                </div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">
+                                    Update: {{ item.updated_at|date:"H:i:s" }} WIB
+                                    {% if item.proof_photo %}
+                                        <span class="text-emerald-600 font-semibold">• 📸 Bukti Ada</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quantity & Payout Info -->
+                        <div class="text-right flex-shrink-0">
+                            <span class="inline-block text-sm font-black text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm">
+                                {{ item.stock_in }} pcs
+                            </span>
+                            <div class="text-[10px] text-slate-500 font-medium mt-1">
+                                Payout: Rp {{ item.partner_payout|floatformat:"0" }}
+                            </div>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12 border border-dashed border-slate-200 rounded-2xl p-6">
+                    <div class="text-3xl mb-2">🌅</div>
+                    <h3 class="text-sm font-bold text-slate-700">Belum Ada In-Take yang Dicatat</h3>
+                    <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                        Gunakan form di sebelah kiri untuk mulai mencatat serah terima barang masuk subuh ini.
+                    </p>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Modal Pop-up "Tambah Mitra Baru" On-The-Fly -->
+<div id="modal-tambah-mitra" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-scale-up">
+        
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <span>✨ Tambah Mitra Baru (On-The-Fly)</span>
+            </h3>
+            <button type="button" id="btn-close-modal-mitra" 
+                    class="text-slate-400 hover:text-slate-600 p-1 rounded-lg min-h-[36px] min-w-[36px] flex items-center justify-center">
+                ✕
+            </button>
+        </div>
+
+        <form id="form-quick-partner" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Nama Mitra UMKM <span class="text-rose-500">*</span>
+                </label>
+                {{ quick_partner_form.name }}
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Nomor WhatsApp
+                </label>
+                {{ quick_partner_form.phone_number }}
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Bank / E-Wallet (Opsional)
+                </label>
+                {{ quick_partner_form.bank_name }}
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">
+                        Atas Nama
+                    </label>
+                    {{ quick_partner_form.bank_account_name }}
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">
+                        No Rekening
+                    </label>
+                    {{ quick_partner_form.bank_account_number }}
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button type="submit" 
+                        class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-colors min-h-[44px]">
+                    Simpan & Pilih Mitra
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/pos-intake.js' %}?v=20261005_v4"></script>
+{% endblock %}

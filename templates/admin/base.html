@@ -1,0 +1,1775 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-stone-50/60 antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Portal Operasional & Admin | Serba 10 Ribu Group{% endblock %}</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            200: '#fecaca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#ef4444',
+                            600: '#e52329',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    {% block extrastyle %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'vendor/tom-select/tom-select.css' %}">
+
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box !important;
+        }
+
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* Force pure light theme with Red & White Brand Accents */
+        :root {
+            --primary: #e52329 !important;
+            --secondary: #b91c1c !important;
+            --accent: #ef4444 !important;
+            --primary-fg: #ffffff !important;
+            --body-bg: #fbfbfa !important;
+            --body-fg: #1e293b !important;
+            --body-quiet-color: #64748b !important;
+            --body-loud-color: #0f172a !important;
+            --header-bg: #ffffff !important;
+            --header-color: #0f172a !important;
+            --breadcrumbs-bg: #f8fafc !important;
+            --breadcrumbs-fg: #64748b !important;
+            --breadcrumbs-link-fg: #e52329 !important;
+            --darkened-bg: #f1f5f9 !important;
+            --selected-bg: #fee2e2 !important;
+            --selected-row: #fef2f2 !important;
+            --border-color: #e2e8f0 !important;
+            --button-bg: #e52329 !important;
+            --button-hover-bg: #b91c1c !important;
+            --default-button-bg: #b91c1c !important;
+            --default-button-hover-bg: #991b1b !important;
+        }
+
+        /* Suppress default Django nav-sidebar and theme toggle */
+        #nav-sidebar, 
+        .theme-toggle, 
+        #toggle-nav-sidebar {
+            display: none !important;
+        }
+
+        /* Clean Table Styling */
+        #changelist table, 
+        .results table,
+        table.model-list,
+        #result_list {
+            width: 100% !important;
+            min-width: 680px !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            background: #ffffff !important;
+            margin: 0 !important;
+        }
+        #changelist table thead th,
+        .results table thead th {
+            background: #f8fafc !important;
+            color: #475569 !important;
+            font-weight: 800 !important;
+            font-size: 11px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.06em !important;
+            padding: 12px 14px !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            vertical-align: middle !important;
+            text-align: left !important;
+            white-space: nowrap !important;
+        }
+        #changelist table thead th a {
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+        #changelist table thead th a:hover {
+            color: #e52329 !important;
+        }
+        /* Suppress confusing priority numbers (3, 1, 2) on headers */
+        th.sortable .sortpriority {
+            display: none !important;
+        }
+        #changelist table tbody tr {
+            transition: background-color 0.15s ease !important;
+        }
+        #changelist table tbody tr:hover,
+        .results table tbody tr:hover {
+            background-color: #fef2f2 !important;
+        }
+        #changelist table tbody td,
+        #changelist table tbody th,
+        .results table tbody td,
+        .results table tbody th {
+            padding: 11px 14px !important;
+            font-size: 13px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            color: #334155 !important;
+            vertical-align: middle !important;
+            font-weight: normal !important;
+        }
+        #changelist table tbody tr:last-child td,
+        #changelist table tbody tr:last-child th {
+            border-bottom: none !important;
+        }
+
+        /* Modern Paginator Bar */
+        .paginator {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 14px !important;
+            padding: 12px 18px !important;
+            margin-top: 16px !important;
+            font-size: 12.5px !important;
+            font-weight: 600 !important;
+            color: #64748b !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+        }
+        .paginator a:link, .paginator a:visited {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 32px !important;
+            height: 32px !important;
+            padding: 0 10px !important;
+            background: #ffffff !important;
+            border: 1.5px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            color: #1e293b !important;
+            font-weight: 700 !important;
+            font-size: 12px !important;
+            text-decoration: none !important;
+            transition: all 0.15s ease !important;
+        }
+        .paginator a:hover {
+            background: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+            color: #e52329 !important;
+        }
+        .paginator .this-page {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 32px !important;
+            height: 32px !important;
+            padding: 0 10px !important;
+            background: #e52329 !important;
+            border: 1.5px solid #e52329 !important;
+            border-radius: 8px !important;
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            font-size: 12px !important;
+            box-shadow: 0 2px 4px rgba(229, 35, 41, 0.25) !important;
+        }
+        .paginator a.showall {
+            margin-left: auto !important;
+            border: none !important;
+            background: #f8fafc !important;
+            color: #64748b !important;
+            font-size: 11.5px !important;
+            height: auto !important;
+            padding: 6px 12px !important;
+            border-radius: 6px !important;
+        }
+        .paginator a.showall:hover {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+
+        /* Search & Action bar */
+        #toolbar {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 16px !important;
+            padding: 8px 12px !important;
+            margin-bottom: 16px !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+        }
+        #changelist-search {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        #changelist-search > div {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 8px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        #changelist-search label[for="searchbar"] {
+            display: none !important;
+        }
+        #searchbar {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 42px !important;
+            padding: 8px 12px 8px 36px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            font-size: 13px !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E") no-repeat 10px center / 16px 16px !important;
+            transition: all 0.15s ease !important;
+        }
+        #searchbar:focus {
+            border-color: #e52329 !important;
+            box-shadow: 0 0 0 3px rgba(229, 35, 41, 0.12) !important;
+            outline: none !important;
+        }
+        #changelist-search input[type="submit"] {
+            flex: 0 0 auto !important;
+            width: auto !important;
+            height: 42px !important;
+            background: #e52329 !important;
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            font-size: 13px !important;
+            border-radius: 12px !important;
+            padding: 0 18px !important;
+            border: none !important;
+            cursor: pointer !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            white-space: nowrap !important;
+            transition: all 0.15s ease !important;
+            box-shadow: 0 1px 2px rgba(229, 35, 41, 0.2) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #changelist-search input[type="submit"]:hover {
+            background: #b91c1c !important;
+        }
+
+        #changelist .actions {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 14px !important;
+            padding: 10px 16px !important;
+            margin-bottom: 16px !important;
+        }
+
+        /* Filter Sidebar Polish */
+        #changelist-filter {
+            background: #ffffff !important;
+            border: 1.5px solid #e2e8f0 !important;
+            border-radius: 16px !important;
+            padding: 0 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+            width: 250px !important;
+            flex-shrink: 0 !important;
+            overflow: hidden !important;
+            margin-bottom: 16px !important;
+        }
+        #changelist-filter h2 {
+            background: #f8fafc !important;
+            color: #0f172a !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            padding: 12px 16px !important;
+            margin: 0 !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            letter-spacing: 0.04em !important;
+            text-transform: uppercase !important;
+        }
+        #changelist-filter-extra-actions {
+            background: #fff1f2 !important;
+            border-bottom: 1px solid #fee2e2 !important;
+            padding: 10px 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 8px !important;
+            flex-wrap: wrap !important;
+        }
+        #changelist-filter-extra-actions h3 {
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 11.5px !important;
+            font-weight: 700 !important;
+        }
+        #changelist-filter-extra-actions a {
+            text-decoration: none !important;
+            font-size: 11.5px !important;
+            font-weight: 700 !important;
+            color: #64748b !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            transition: color 0.15s ease !important;
+        }
+        #changelist-filter-extra-actions a:hover {
+            color: #e52329 !important;
+        }
+        #changelist-filter-extra-actions a.text-rose-600,
+        #changelist-filter-extra-actions a[href*="?"]:not(#changelist-filter-facet-toggle) {
+            color: #e11d48 !important;
+            font-weight: 800 !important;
+        }
+        #changelist-filter details {
+            border-bottom: 1px solid #f1f5f9 !important;
+            padding: 8px 0 !important;
+        }
+        #changelist-filter details:last-child {
+            border-bottom: none !important;
+        }
+        #changelist-filter summary {
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            color: #64748b !important;
+            padding: 8px 16px !important;
+            margin: 0 !important;
+            cursor: pointer !important;
+            outline: none !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            user-select: none !important;
+            transition: color 0.15s ease !important;
+        }
+        #changelist-filter summary:hover {
+            color: #e52329 !important;
+        }
+        #changelist-filter ul {
+            list-style: none !important;
+            margin: 6px 0 0 0 !important;
+            padding: 4px 12px 10px 12px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 4px !important;
+            max-height: 220px !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        #changelist-filter li {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        #changelist-filter li a {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 8px 12px !important;
+            border-radius: 10px !important;
+            font-size: 12.5px !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+            text-decoration: none !important;
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            min-height: 38px !important;
+            transition: all 0.15s ease !important;
+        }
+        #changelist-filter li a:hover {
+            background: #fef2f2 !important;
+            color: #b91c1c !important;
+            border-color: #fecaca !important;
+        }
+        #changelist-filter li.selected a {
+            background: #fee2e2 !important;
+            color: #991b1b !important;
+            font-weight: 800 !important;
+            border-color: #fca5a5 !important;
+            box-shadow: 0 1px 2px rgba(229, 35, 41, 0.08) !important;
+        }
+        #changelist-filter::-webkit-scrollbar,
+        #changelist-filter ul::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        #changelist-filter::-webkit-scrollbar-track,
+        #changelist-filter ul::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        #changelist-filter::-webkit-scrollbar-thumb,
+        #changelist-filter ul::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        #changelist-filter::-webkit-scrollbar-thumb:hover,
+        #changelist-filter ul::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Buttons & Inputs */
+        /* Modern Form Inputs */
+        input[type="text"], input[type="password"], input[type="email"], 
+        input[type="number"], input[type="url"], select, textarea {
+            border: 1.5px solid #cbd5e1 !important;
+            border-radius: 10px !important;
+            padding: 9px 14px !important;
+            background: #ffffff !important;
+            font-family: inherit !important;
+            color: #0f172a !important;
+            font-size: 13.5px !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+            transition: all 0.15s ease !important;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #e52329 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(229, 35, 41, 0.12) !important;
+        }
+
+        /* Module & Fieldset Card Styling */
+        .module {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
+            margin-bottom: 24px !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+        }
+        .module h2, .module .fieldset-heading {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            padding: 16px 22px !important;
+            margin: 0 !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            letter-spacing: -0.01em !important;
+        }
+        .module .description {
+            background: #f8fafc !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            padding: 10px 22px !important;
+            font-size: 12px !important;
+            color: #64748b !important;
+            line-height: 1.5 !important;
+            margin: 0 !important;
+        }
+
+        /* Form Rows & Aligned Inputs */
+        .form-row {
+            padding: 16px 22px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            background: transparent !important;
+        }
+        .form-row:last-child {
+            border-bottom: none !important;
+        }
+        .form-row .flex-container:not(.checkbox-row) {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            width: 100% !important;
+        }
+        @media (min-width: 640px) {
+            .form-row .flex-container:not(.checkbox-row) {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 24px !important;
+            }
+            .form-row label:not(.vCheckboxLabel) {
+                width: 200px !important;
+                flex-shrink: 0 !important;
+                font-weight: 700 !important;
+                color: #334155 !important;
+                font-size: 13px !important;
+                margin: 0 !important;
+            }
+        }
+        .form-row label.required::after {
+            content: " *" !important;
+            color: #e52329 !important;
+            font-weight: 900 !important;
+        }
+        .form-row select, 
+        .form-row input[type="text"], 
+        .form-row input[type="number"], 
+        .form-row input[type="password"], 
+        .form-row input[type="email"], 
+        .form-row textarea {
+            width: 100% !important;
+            max-width: 580px !important;
+        }
+
+        /* Checkbox Row as Modern Clean Toggle Card */
+        .flex-container.checkbox-row, 
+        .form-row.checkbox-row .flex-container,
+        .form-row.field-is_active .flex-container {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 12px !important;
+            background: #f8fafc !important;
+            padding: 12px 18px !important;
+            border-radius: 12px !important;
+            border: 1px solid #e2e8f0 !important;
+            max-width: 580px !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+        }
+        .flex-container.checkbox-row:hover,
+        .form-row.field-is_active .flex-container:hover {
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+        }
+        .flex-container.checkbox-row input[type="checkbox"],
+        .form-row.field-is_active input[type="checkbox"] {
+            width: 20px !important;
+            height: 20px !important;
+            accent-color: #e52329 !important;
+            cursor: pointer !important;
+            margin: 0 !important;
+            border-radius: 6px !important;
+        }
+        .flex-container.checkbox-row label.vCheckboxLabel,
+        .form-row.field-is_active label.vCheckboxLabel {
+            width: auto !important;
+            font-weight: 700 !important;
+            color: #1e293b !important;
+            font-size: 13px !important;
+            cursor: pointer !important;
+            margin: 0 !important;
+        }
+
+        .help, p.help {
+            font-size: 11.5px !important;
+            color: #64748b !important;
+            margin-top: 5px !important;
+        }
+
+        /* Action Buttons: Submit Row Visual Hierarchy */
+        .submit-row {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 16px !important;
+            padding: 16px 24px !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+        }
+        /* Destructive Action (Hapus) */
+        .submit-row a.deletelink {
+            margin-right: auto !important;
+            order: -1 !important;
+            background: #fff1f2 !important;
+            color: #e11d48 !important;
+            border: 1px solid #fecdd3 !important;
+            padding: 9px 18px !important;
+            border-radius: 10px !important;
+            font-weight: 800 !important;
+            text-decoration: none !important;
+            font-size: 12.5px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            transition: all 0.15s ease !important;
+        }
+        .submit-row a.deletelink:hover {
+            background: #ffe4e6 !important;
+            border-color: #fda4af !important;
+            color: #be123c !important;
+        }
+        /* Primary Action: Simpan */
+        .submit-row input[name="_save"], 
+        .submit-row input.default {
+            background: #e52329 !important;
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            font-size: 13px !important;
+            border-radius: 10px !important;
+            padding: 9px 24px !important;
+            border: 1px solid #dc2626 !important;
+            box-shadow: 0 2px 6px rgba(229, 35, 41, 0.25) !important;
+            cursor: pointer !important;
+            order: 3 !important;
+            transition: all 0.15s ease !important;
+        }
+        .submit-row input[name="_save"]:hover, 
+        .submit-row input.default:hover {
+            background: #b91c1c !important;
+            box-shadow: 0 4px 10px rgba(185, 28, 28, 0.3) !important;
+        }
+        /* Secondary Actions: Simpan dan tambah / Simpan dan edit */
+        .submit-row input[name="_addanother"], 
+        .submit-row input[name="_continue"] {
+            background: #ffffff !important;
+            color: #334155 !important;
+            font-weight: 700 !important;
+            font-size: 12.5px !important;
+            border-radius: 10px !important;
+            padding: 9px 18px !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+            cursor: pointer !important;
+            order: 2 !important;
+            transition: all 0.15s ease !important;
+        }
+        .submit-row input[name="_addanother"]:hover, 
+        .submit-row input[name="_continue"]:hover {
+            background: #f8fafc !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+
+        /* Pagination Pills */
+        div.pagination {
+            background: #ffffff !important;
+            border-top: 1px solid #f1f5f9 !important;
+            padding: 14px 20px !important;
+            font-size: 12px !important;
+            color: #64748b !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            flex-wrap: wrap !important;
+        }
+        div.pagination a {
+            padding: 4px 10px !important;
+            border-radius: 8px !important;
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #d97706 !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+            transition: all 0.15s ease !important;
+        }
+        div.pagination a:hover {
+            background: #fef3c7 !important;
+            border-color: #fde68a !important;
+        }
+        div.pagination .this-page {
+            padding: 4px 10px !important;
+            border-radius: 8px !important;
+            background: #d97706 !important;
+            color: #ffffff !important;
+            font-weight: 900 !important;
+        }
+
+        /* Object Tools Buttons (Clean Secondary Utilities by default, Bold Red for Add) */
+        ul.object-tools {
+            display: flex !important;
+            gap: 8px !important;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            align-items: center !important;
+        }
+        ul.object-tools li {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        ul.object-tools li a {
+            background: #ffffff !important;
+            color: #475569 !important;
+            font-weight: 700 !important;
+            font-size: 12px !important;
+            padding: 8px 14px !important;
+            border-radius: 10px !important;
+            border: 1px solid #cbd5e1 !important;
+            text-decoration: none !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            transition: all 0.15s ease !important;
+        }
+        ul.object-tools li a:hover {
+            background: #f8fafc !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+        /* Special case: Add Link on Changelist is Primary Brand Red */
+        ul.object-tools li a.addlink {
+            background: #e52329 !important;
+            color: #ffffff !important;
+            border-color: #dc2626 !important;
+            font-weight: 800 !important;
+            box-shadow: 0 2px 6px rgba(229, 35, 41, 0.25) !important;
+        }
+        ul.object-tools li a.addlink:hover {
+            background: #b91c1c !important;
+            color: #ffffff !important;
+        }
+
+        /* Breadcrumbs Styling */
+        div.breadcrumbs {
+            background: #ffffff !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            padding: 10px 24px !important;
+            font-size: 12px !important;
+            color: #64748b !important;
+            font-weight: 600 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+        div.breadcrumbs a {
+            color: #e52329 !important;
+            text-decoration: none !important;
+            font-weight: 700 !important;
+        }
+        div.breadcrumbs a:hover {
+            color: #b91c1c !important;
+        }
+
+        /* Table Container Responsive Wrapper */
+        .results {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            display: block !important;
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 16px !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+            margin-bottom: 1rem !important;
+        }
+        #changelist-form .results {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        /* Changelist Layout & Filters */
+        #changelist {
+            display: flex !important;
+            flex-direction: row-reverse !important;
+            gap: 20px !important;
+            align-items: flex-start !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+        #changelist .changelist-form-container {
+            flex-grow: 1 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+        }
+        #changelist-form {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+        #changelist-filter {
+            width: 260px !important;
+            flex-shrink: 0 !important;
+            margin-left: 0 !important;
+            position: static !important;
+        }
+
+        /* Mobile Breakpoint Refinements (max-width: 768px) */
+        @media (max-width: 768px) {
+            #changelist {
+                flex-direction: column !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                gap: 16px !important;
+            }
+            #changelist-filter {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin-top: 8px !important;
+                margin-bottom: 24px !important;
+                max-height: 380px !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                border-radius: 16px !important;
+            }
+            #changelist-filter ul {
+                max-height: 180px !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            #toolbar {
+                padding: 8px 10px !important;
+                border-radius: 14px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            #changelist-search > div {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 6px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            #searchbar {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 40px !important;
+                box-sizing: border-box !important;
+            }
+            #changelist-search input[type="submit"] {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                height: 40px !important;
+                padding: 0 14px !important;
+                box-sizing: border-box !important;
+            }
+            #changelist .actions {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                padding: 12px 14px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            #changelist .actions label {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 6px !important;
+                font-size: 12px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            #changelist .actions select {
+                width: 100% !important;
+                max-width: 100% !important;
+                font-size: 12px !important;
+                padding: 8px !important;
+                box-sizing: border-box !important;
+            }
+            #changelist .actions button.button {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 9px 14px !important;
+                text-align: center !important;
+                box-sizing: border-box !important;
+            }
+            .form-row {
+                padding: 12px 14px !important;
+            }
+            .form-row select, 
+            .form-row input[type="text"], 
+            .form-row input[type="number"], 
+            .form-row input[type="password"], 
+            .form-row input[type="email"], 
+            .form-row textarea {
+                max-width: 100% !important;
+                font-size: 14px !important;
+            }
+            .submit-row {
+                position: sticky !important;
+                bottom: 0 !important;
+                z-index: 30 !important;
+                flex-direction: column !important;
+                padding: 12px 16px !important;
+                gap: 8px !important;
+                background: rgba(255, 255, 255, 0.96) !important;
+                backdrop-filter: blur(10px) !important;
+                border-radius: 16px 16px 0 0 !important;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08) !important;
+            }
+            .submit-row input, 
+            .submit-row a {
+                width: 100% !important;
+                text-align: center !important;
+                justify-content: center !important;
+                margin: 0 !important;
+            }
+            .submit-row a.deletelink {
+                order: 4 !important;
+            }
+            .paginator {
+                justify-content: center !important;
+                padding: 10px 12px !important;
+            }
+            .paginator a.showall {
+                margin-left: 0 !important;
+                width: 100% !important;
+                text-align: center !important;
+            }
+            div.breadcrumbs {
+                padding: 8px 16px !important;
+                overflow-x: auto !important;
+                white-space: nowrap !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+        }
+
+        /* ==========================================================================
+           Aesthetic Single-Selects (Matching Clean POS In-Take Style)
+           ========================================================================== */
+        /* Prevent Django form rows & fieldsets from clipping dropdowns */
+        fieldset.module,
+        .module.aligned,
+        .form-row,
+        .related-widget-wrapper {
+            overflow: visible !important;
+        }
+
+        .ts-wrapper {
+            width: 100% !important;
+            max-width: 580px !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            position: relative !important;
+        }
+        @media (max-width: 768px) {
+            .ts-wrapper,
+            .related-widget-wrapper {
+                max-width: 100% !important;
+            }
+        }
+
+        /* 1. Main Trigger Box (Exact clean look of POS Intake field) */
+        .ts-wrapper.single .ts-control {
+            background-color: #ffffff !important;
+            border: 1.5px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            padding: 0 38px 0 14px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            max-height: 44px !important;
+            font-size: 13.5px !important;
+            font-weight: 600 !important;
+            color: #1e293b !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            position: relative !important;
+            overflow: hidden !important;
+            transition: all 0.15s ease !important;
+            box-sizing: border-box !important;
+        }
+        .ts-wrapper.single .ts-control:hover {
+            border-color: #94a3b8 !important;
+        }
+        .ts-wrapper.single.focus .ts-control,
+        .ts-wrapper.single.dropdown-active .ts-control {
+            border-color: #e52329 !important;
+            box-shadow: 0 0 0 3px rgba(229, 35, 41, 0.14) !important;
+            outline: none !important;
+        }
+
+        /* 2. COMPLETELY RESET inner input so NO second box ever appears */
+        .ts-wrapper .ts-control input,
+        .ts-wrapper .ts-control > input,
+        .form-row .ts-wrapper .ts-control input,
+        .form-row .ts-wrapper .ts-control > input {
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: 100% !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            font-family: inherit !important;
+            font-size: 13.5px !important;
+            font-weight: 600 !important;
+            color: #0f172a !important;
+            outline: none !important;
+            box-sizing: border-box !important;
+            display: inline-block !important;
+        }
+        /* When an item is selected, hide the input so it doesn't take space or show a ghost cursor */
+        .ts-wrapper.single.has-items .ts-control > input {
+            position: absolute !important;
+            left: -10000px !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        /* When no item is selected, let input take full width to display placeholder and receive search text */
+        .ts-wrapper.single:not(.has-items) .ts-control > input {
+            position: static !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            flex: 1 1 auto !important;
+            width: 100% !important;
+        }
+
+        /* 3. Selected item label styling - ALWAYS visible when selected */
+        .ts-wrapper.single .ts-control .item {
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            font-size: 13.5px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            line-height: 44px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            display: block !important;
+        }
+
+        /* 4. Single elegant Chevron Arrow */
+        .ts-wrapper.single .ts-control:after {
+            content: "" !important;
+            position: absolute !important;
+            right: 15px !important;
+            top: 50% !important;
+            margin-top: -3px !important;
+            width: 8px !important;
+            height: 8px !important;
+            border-right: 2px solid #64748b !important;
+            border-bottom: 2px solid #64748b !important;
+            border-left: 0 !important;
+            border-top: 0 !important;
+            transform: rotate(45deg) !important;
+            transition: transform 0.2s ease, border-color 0.15s ease !important;
+            pointer-events: none !important;
+        }
+        .ts-wrapper.single.dropdown-active .ts-control:after {
+            transform: rotate(-135deg) !important;
+            margin-top: 1px !important;
+            border-color: #e52329 !important;
+        }
+
+        /* 5. Dropdown Menu (Always opens cleanly downwards below the control) */
+        .ts-dropdown {
+            position: absolute !important;
+            top: 100% !important;
+            left: 0 !important;
+            width: 100% !important;
+            margin-top: 5px !important;
+            border: 1.5px solid #e2e8f0 !important;
+            border-radius: 14px !important;
+            background: #ffffff !important;
+            box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.06) !important;
+            z-index: 1050 !important;
+            overflow: hidden !important;
+            padding: 4px !important;
+        }
+        .ts-dropdown .ts-dropdown-content {
+            max-height: 240px !important;
+            overflow-y: auto !important;
+            padding: 4px 2px !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        .ts-dropdown .option {
+            padding: 9px 14px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #334155 !important;
+            border-radius: 9px !important;
+            cursor: pointer !important;
+            transition: all 0.12s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            min-height: 38px !important;
+            box-sizing: border-box !important;
+        }
+        .ts-dropdown .option:hover,
+        .ts-dropdown .option.active {
+            background-color: #fef2f2 !important;
+            color: #b91c1c !important;
+        }
+        .ts-dropdown .option.selected {
+            background-color: #fee2e2 !important;
+            color: #991b1b !important;
+            font-weight: 800 !important;
+        }
+        .ts-dropdown .no-results {
+            padding: 12px 14px !important;
+            font-size: 12.5px !important;
+            color: #94a3b8 !important;
+            text-align: center !important;
+            font-style: italic !important;
+        }
+        .ts-dropdown .ts-dropdown-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .ts-dropdown .ts-dropdown-content::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        .ts-dropdown .ts-dropdown-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .ts-dropdown .ts-dropdown-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 6. Related Widget Wrapper (+, pencil, view icons in one line) */
+        .related-widget-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            width: 100% !important;
+            max-width: 580px !important;
+            flex-wrap: nowrap !important;
+            position: relative !important;
+        }
+        .related-widget-wrapper .ts-wrapper {
+            flex: 1 1 0% !important;
+            min-width: 0 !important;
+            width: auto !important;
+            max-width: none !important;
+        }
+        .related-widget-wrapper-link {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 10px !important;
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #475569 !important;
+            text-decoration: none !important;
+            transition: all 0.15s ease !important;
+            flex-shrink: 0 !important;
+        }
+        .related-widget-wrapper-link:hover {
+            background: #fef2f2 !important;
+            border-color: #fca5a5 !important;
+            color: #b91c1c !important;
+        }
+
+        /* Content Title Typography */
+        #content h1, main h1 {
+            font-size: 20px !important;
+            font-weight: 900 !important;
+            color: #0f172a !important;
+            margin-bottom: 16px !important;
+        }
+    </style>
+
+    {% block extrahead %}{% endblock %}
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-full flex flex-col md:flex-row text-slate-800 bg-[#FBFBFA]">
+
+    <!-- Mobile Top Navigation Header (Clean Light Red-White Theme) -->
+    <header class="md:hidden bg-white text-slate-800 border-b border-red-100 px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-xs">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-white border border-red-200 p-0.5 shadow-xs overflow-hidden flex-shrink-0">
+                <img src="/media/Logo/Serba10ribuciomas.jpeg" alt="Logo" class="w-full h-full object-contain">
+            </div>
+            <div>
+                <span class="font-black text-sm text-slate-900 tracking-tight">Serba 10 Ribu</span>
+                <span class="text-[10px] block text-brand-700 font-black uppercase tracking-wider -mt-0.5">Admin Portal</span>
+            </div>
+        </div>
+        <button type="button" id="mobile-menu-toggle" aria-label="Buka Menu Navigasi" class="p-2 rounded-xl bg-red-50 text-slate-700 hover:text-brand-700 border border-red-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Backdrop Overlay for Mobile Drawer -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 hidden opacity-0 transition-opacity duration-300 md:hidden" aria-hidden="true"></div>
+
+    <!-- Sidebar Navigation: Responsive Drawer on Mobile, Fixed Sidebar on Desktop -->
+    <aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white text-slate-700 flex flex-col -translate-x-full transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:w-64 md:min-h-screen shadow-2xl md:shadow-xs border-r border-red-100/80">
+        
+        <!-- Brand Header in Sidebar with Official Logo & Mobile Close Button -->
+        <div class="p-4 sm:p-5 border-b border-red-100/70 bg-gradient-to-r from-red-50/60 to-white flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-red-200 p-0.5 shadow-xs flex-shrink-0 overflow-hidden">
+                    <img src="/media/Logo/Serba10ribuciomas.jpeg" alt="Logo" class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <div class="font-black text-slate-900 text-sm sm:text-base leading-tight tracking-tight">
+                        Serba 10 Ribu
+                    </div>
+                    <div class="text-[10px] sm:text-[11px] text-brand-700 font-extrabold uppercase tracking-wider">
+                        Internal Workspace
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Close Button (✕) -->
+            <button type="button" id="sidebar-close-btn" class="md:hidden p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-red-50 transition-colors" aria-label="Tutup Menu">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+        </div>
+
+        <!-- Navigation Menu Groups -->
+        <nav class="flex-grow p-4 space-y-6 overflow-y-auto text-xs">
+            
+            <!-- Group 0: Command Center -->
+            <div>
+                <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2 px-3">
+                    Ringkasan Utama
+                </div>
+                <div class="space-y-1">
+                    <a href="{% url 'admin:index' %}" 
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition-all
+                       {% if request.path == '/admin/' %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-700 hover:bg-red-50/70 hover:text-brand-800
+                       {% endif %}">
+                        <span class="text-base">🏠</span>
+                        <span>Dashboard Eksekutif</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Group 1: Operasional Harian Gerai -->
+            <div>
+                <div class="text-[10px] font-black uppercase tracking-wider text-brand-800 mb-2 px-3 flex items-center justify-between">
+                    <span>Operasional Subuh</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                </div>
+                <div class="space-y-1">
+                    <a href="{% url 'inventory:pos_intake' %}" 
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition-all
+                       {% if '/pos/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/70 hover:text-brand-800
+                       {% endif %}">
+                        <span class="text-base">⚡</span>
+                        <span>Kasir POS Pagi (In-Take)</span>
+                    </a>
+                    <a href="{% url 'partners:attendance_h1' %}" 
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition-all
+                       {% if '/absensi/' in request.path or '/mitra/absensi/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/70 hover:text-brand-800
+                       {% endif %}">
+                        <span class="text-base">📋</span>
+                        <span>Absensi Drop Mitra (H-1)</span>
+                    </a>
+                    <a href="{% url 'finances:cashier_closure' %}" 
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition-all
+                       {% if '/kasir/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/70 hover:text-brand-800
+                       {% endif %}">
+                        <span class="text-base">💵</span>
+                        <span>Tutup Kasir & Rekonsiliasi</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Group 2: Laporan & Analitik -->
+            <div>
+                <div class="text-[10px] font-black uppercase tracking-wider text-rose-800 mb-2 px-3 flex items-center justify-between">
+                    <span>Laporan & Analitik</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-600"></span>
+                </div>
+                <div class="space-y-1">
+                    <a href="{% url 'finances:monthly_matrix' %}" 
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition-all
+                       {% if '/matriks/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/70 hover:text-brand-800
+                       {% endif %}">
+                        <span class="text-base">📊</span>
+                        <span>Matriks Penjualan Bulanan</span>
+                    </a>
+                    <a href="{% url 'finances:branch_comparison' %}" 
+                       class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition-all
+                       {% if '/komparasi/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/70 hover:text-brand-800
+                       {% endif %}">
+                        <span class="text-base">📈</span>
+                        <span>Komparasi Ciomas vs Dramaga</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Group 3: Master Data Tables -->
+            <div>
+                <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2 px-3">
+                    Database Master Data
+                </div>
+                <div class="space-y-1">
+                    <a href="/admin/branches/branch/" 
+                       class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-semibold transition-colors
+                       {% if '/admin/branches/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/50 hover:text-slate-900
+                       {% endif %}">
+                        <span>📍</span> Cabang & Titik GIS
+                    </a>
+                    <a href="/admin/partners/partner/" 
+                       class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-semibold transition-colors
+                       {% if '/admin/partners/partner/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/50 hover:text-slate-900
+                       {% endif %}">
+                        <span>👥</span> Master Mitra UMKM (78)
+                    </a>
+                    <a href="/admin/products/product/" 
+                       class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-semibold transition-colors
+                       {% if '/admin/products/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/50 hover:text-slate-900
+                       {% endif %}">
+                        <span>🍱</span> Katalog Menu Makanan
+                    </a>
+                    <a href="/admin/inventory/dailystock/" 
+                       class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-semibold transition-colors
+                       {% if '/admin/inventory/dailystock/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/50 hover:text-slate-900
+                       {% endif %}">
+                        <span>📸</span> Bukti Foto & Transaksi
+                    </a>
+                    <a href="/admin/finances/dailycashflow/" 
+                       class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-semibold transition-colors
+                       {% if '/admin/finances/dailycashflow/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/50 hover:text-slate-900
+                       {% endif %}">
+                        <span>💰</span> Buku Kasflow Harian
+                    </a>
+                    <a href="/admin/auth/user/" 
+                       class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-semibold transition-colors
+                       {% if '/admin/auth/' in request.path %}
+                           bg-brand-50 text-brand-900 border-l-4 border-brand-600 shadow-xs
+                       {% else %}
+                           text-slate-600 hover:bg-red-50/50 hover:text-slate-900
+                       {% endif %}">
+                        <span>👤</span> Pengguna & Hak Akses
+                    </a>
+                </div>
+            </div>
+
+        </nav>
+
+        <!-- Sidebar User Footer (Clean Red-White Theme) -->
+        <div class="p-4 border-t border-red-100 bg-red-50/20 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-brand-100 border border-brand-300 flex items-center justify-center font-black text-brand-800">
+                    {{ request.user.username|make_list|first|upper|default:"A" }}
+                </div>
+                <div>
+                    <div class="font-extrabold text-slate-900 leading-tight">
+                        {{ request.user.username|capfirst|default:"Admin" }}
+                    </div>
+                    <div class="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Staff Aktif
+                    </div>
+                </div>
+            </div>
+            <a href="{% url 'admin:logout' %}" title="Logout" 
+               class="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- Main Content Workspace -->
+    <div class="flex-grow flex flex-col min-w-0 bg-[#FBFBFA]">
+        
+        <!-- Top Workspace Bar (Clean Light Red-White Theme) -->
+        <div class="bg-white border-b border-red-100/80 px-3.5 sm:px-6 py-2.5 sm:py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 shadow-xs">
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <span class="text-[11px] sm:text-xs font-bold text-slate-500">Workspace Gerai:</span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold bg-red-50 text-brand-900 border border-red-200">
+                    📍 Ciomas & Dramaga Bogor
+                </span>
+            </div>
+
+            <!-- Fast Link to Public Storefront -->
+            <a href="{% url 'branches:home' %}" target="_blank"
+               class="text-[11px] sm:text-xs font-bold text-brand-800 hover:text-brand-900 bg-red-50/60 hover:bg-red-100/70 border border-red-200 px-3 sm:px-3.5 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs flex-shrink-0">
+                <span>🏪</span>
+                <span>Buka Toko Publik</span>
+                <svg class="w-3.5 h-3.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Breadcrumbs (if present in view) -->
+        {% block breadcrumbs %}
+        {% endblock %}
+
+        <!-- Messages Notifications -->
+        {% if messages %}
+        <div class="px-3.5 sm:px-6 pt-3.5 space-y-2">
+            {% for message in messages %}
+            <div class="p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 border shadow-sm
+                        {% if message.tags == 'success' %}
+                            bg-emerald-50 text-emerald-900 border-emerald-200
+                        {% elif message.tags == 'error' %}
+                            bg-rose-50 text-rose-900 border-rose-200
+                        {% elif message.tags == 'warning' %}
+                            bg-amber-50 text-amber-900 border-amber-200
+                        {% else %}
+                            bg-blue-50 text-blue-900 border-blue-200
+                        {% endif %}">
+                <span>🔔</span>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Page Dynamic Body -->
+        <main class="flex-grow p-3.5 sm:p-6 lg:p-8">
+            {% block content %}{% endblock %}
+        </main>
+
+    </div>
+
+    <!-- Toggle Script for Mobile Drawer -->
+    <script>
+        (function() {
+            const mobileToggle = document.getElementById('mobile-menu-toggle');
+            const sidebarClose = document.getElementById('sidebar-close-btn');
+            const sidebar = document.getElementById('admin-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+
+            function openSidebar() {
+                if (!sidebar || !backdrop) return;
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    backdrop.classList.remove('opacity-0');
+                    backdrop.classList.add('opacity-100');
+                });
+                document.body.classList.add('overflow-hidden', 'md:overflow-auto');
+            }
+
+            function closeSidebar() {
+                if (!sidebar || !backdrop) return;
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.remove('opacity-100');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => {
+                    backdrop.classList.add('hidden');
+                }, 300);
+                document.body.classList.remove('overflow-hidden', 'md:overflow-auto');
+            }
+
+            if (mobileToggle) mobileToggle.addEventListener('click', openSidebar);
+            if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+            if (backdrop) backdrop.addEventListener('click', closeSidebar);
+
+            // Close on Escape key press
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar && !sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
+                    closeSidebar();
+                }
+            });
+
+            // Close drawer automatically when clicking navigation link on mobile
+            if (sidebar) {
+                sidebar.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (window.innerWidth < 768) {
+                            closeSidebar();
+                        }
+                    });
+                });
+            }
+        })();
+    </script>
+
+    <!-- Tom Select Library & Auto-Initialization for Form Selects -->
+    <script src="{% static 'vendor/tom-select/tom-select.complete.min.js' %}"></script>
+    <script>
+        function initAppTomSelects(root) {
+            if (typeof TomSelect === 'undefined') return;
+            const container = root || document;
+            // Target all form selects, excluding multi-selects, action checkboxes, and .no-tomselect
+            const selects = container.querySelectorAll('select:not([multiple]):not(.no-tomselect):not(#action-toggle):not([name="action"])');
+            selects.forEach(function(el) {
+                if (el.tomselect) return;
+                if (el.closest('.empty-form') || el.closest('.inline-related.last-related:not(.has_original)')) return;
+                
+                try {
+                    new TomSelect(el, {
+                        create: false,
+                        allowEmptyOption: true,
+                        maxOptions: 500,
+                        placeholder: '🔍 Cari atau pilih...',
+                        closeAfterSelect: true,
+                        render: {
+                            no_results: function(data, escape) {
+                                return '<div class="no-results">Tidak ada pilihan yang cocok dengan "' + escape(data.input) + '"</div>';
+                            },
+                            option: function(data, escape) {
+                                if (data.value === '' || data.text === '---------') {
+                                    return '<div class="option text-slate-400 italic font-normal">-- Pilih / Kosongkan --</div>';
+                                }
+                                return '<div class="option font-semibold">' + escape(data.text) + '</div>';
+                            },
+                            item: function(data, escape) {
+                                if (data.value === '' || data.text === '---------') {
+                                    return '<span class="text-slate-400 font-normal">-- Pilih / Kosongkan --</span>';
+                                }
+                                return '<div>' + escape(data.text) + '</div>';
+                            }
+                        }
+                    });
+
+                    // Instantly commit and show selected item without requiring click-outside
+                    ts.on('item_add', function() {
+                        this.blur();
+                    });
+                    ts.on('change', function() {
+                        this.blur();
+                    });
+                } catch(err) {
+                    console.warn('TomSelect init error on', el, err);
+                }
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() { initAppTomSelects(); });
+        } else {
+            initAppTomSelects();
+        }
+        window.initAppTomSelects = initAppTomSelects;
+    </script>
+
+    <!-- Global In-Page Delete Confirmation Modal -->
+    <div id="global-delete-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4 sm:p-6" aria-modal="true" role="dialog" aria-labelledby="delete-modal-title">
+        <!-- Backdrop overlay with blur -->
+        <div id="delete-modal-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-200"></div>
+
+        <!-- Modal Card -->
+        <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-10 transform transition-all duration-200 scale-95 opacity-0" id="delete-modal-card">
+            <!-- Close button (top right) -->
+            <button type="button" id="delete-modal-close-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="Tutup dialog">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <div class="p-6 sm:p-7 text-center">
+                <!-- Red Danger Icon with pulsing ring -->
+                <div class="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-600 flex items-center justify-center mx-auto mb-4 shadow-xs">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+
+                <!-- Title -->
+                <h3 id="delete-modal-title" class="text-lg font-black text-slate-900 tracking-tight mb-1.5">
+                    Hapus Data Ini?
+                </h3>
+                
+                <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                    Tindakan ini permanen. Data yang telah dihapus tidak dapat dipulihkan kembali.
+                </p>
+
+                <!-- Target Object Preview Box -->
+                <div class="bg-rose-50/60 border border-rose-100 rounded-2xl p-3.5 mb-4 text-left flex items-start gap-2.5">
+                    <span class="text-base flex-shrink-0">📦</span>
+                    <div class="min-w-0 flex-1">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-rose-700 block">Objek yang Dipilih</span>
+                        <span id="delete-modal-object-name" class="font-black text-xs sm:text-sm text-slate-800 break-words line-clamp-2 block mt-0.5">
+                            Memuat data objek...
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Warning Notice -->
+                <div class="text-[11px] text-amber-800 bg-amber-50/80 border border-amber-200 rounded-xl p-3 mb-6 text-left flex items-start gap-2">
+                    <span class="flex-shrink-0 text-sm">⚠️</span>
+                    <span>Seluruh riwayat atau entri turunan yang terikat langsung dengan data ini juga akan ikut terhapus.</span>
+                </div>
+
+                <!-- Action Buttons Form -->
+                <form id="global-delete-modal-form" method="post" action="" class="m-0 p-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="post" value="yes">
+                    
+                    <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                        <button type="button" id="delete-modal-cancel-btn" 
+                                class="w-full sm:flex-1 h-11 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs transition-colors shadow-xs flex items-center justify-center cursor-pointer">
+                            ✕ Batal
+                        </button>
+                        <button type="submit" id="delete-modal-confirm-btn" 
+                                class="w-full sm:flex-1 h-11 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-extrabold text-xs transition-all shadow-md shadow-brand-600/25 flex items-center justify-center gap-2 cursor-pointer">
+                            <span id="delete-modal-btn-icon">🗑️</span>
+                            <span id="delete-modal-btn-text">Ya, Hapus Sekarang</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal Interceptor Logic -->
+    <script>
+        (function() {
+            const modal = document.getElementById('global-delete-modal');
+            const card = document.getElementById('delete-modal-card');
+            const backdrop = document.getElementById('delete-modal-backdrop');
+            const form = document.getElementById('global-delete-modal-form');
+            const objNameEl = document.getElementById('delete-modal-object-name');
+            const cancelBtn = document.getElementById('delete-modal-cancel-btn');
+            const closeBtn = document.getElementById('delete-modal-close-btn');
+            const confirmBtn = document.getElementById('delete-modal-confirm-btn');
+            const btnText = document.getElementById('delete-modal-btn-text');
+            const btnIcon = document.getElementById('delete-modal-btn-icon');
+
+            if (!modal || !form) return;
+
+            function openDeleteModal(deleteUrl, objectName) {
+                form.action = deleteUrl;
+                objNameEl.textContent = objectName || 'Data Terpilih';
+                
+                // Reset button state
+                confirmBtn.disabled = false;
+                btnText.textContent = 'Ya, Hapus Sekarang';
+                btnIcon.textContent = '🗑️';
+
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                
+                requestAnimationFrame(() => {
+                    card.classList.remove('scale-95', 'opacity-0');
+                    card.classList.add('scale-100', 'opacity-100');
+                });
+            }
+
+            function closeDeleteModal() {
+                card.classList.remove('scale-100', 'opacity-100');
+                card.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }, 150);
+            }
+
+            cancelBtn?.addEventListener('click', closeDeleteModal);
+            closeBtn?.addEventListener('click', closeDeleteModal);
+            backdrop?.addEventListener('click', closeDeleteModal);
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeDeleteModal();
+                }
+            });
+
+            form.addEventListener('submit', function() {
+                confirmBtn.disabled = true;
+                btnText.textContent = 'Menghapus...';
+                btnIcon.innerHTML = '<svg class="animate-spin -ml-1 mr-1.5 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            });
+
+            // Global Click Interception for Delete Actions
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a');
+                if (!link) return;
+
+                const href = link.getAttribute('href') || '';
+                const isDeleteAction = link.classList.contains('btn-delete-modal') || 
+                                       link.classList.contains('deletelink') ||
+                                       href.endsWith('/delete/') ||
+                                       href.includes('/delete/?');
+
+                if (isDeleteAction) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    let objectName = link.getAttribute('data-object-name');
+                    if (!objectName) {
+                        // Infer from row or page
+                        const row = link.closest('tr');
+                        if (row) {
+                            const primaryCol = row.querySelector('.field-__str__') || 
+                                               row.querySelector('th a') || 
+                                               row.querySelector('td:nth-child(2)');
+                            objectName = primaryCol ? primaryCol.textContent.trim() : 'Data dalam baris ini';
+                        } else {
+                            const headerH1 = document.querySelector('#content h1, main h1');
+                            if (headerH1) {
+                                objectName = headerH1.textContent.replace('Ubah Data:', '').replace('Ubah', '').trim();
+                            }
+                        }
+                    }
+
+                    openDeleteModal(href, objectName);
+                }
+            });
+
+            window.openDeleteModal = openDeleteModal;
+            window.closeDeleteModal = closeDeleteModal;
+        })();
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

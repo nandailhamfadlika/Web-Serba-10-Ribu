@@ -1,0 +1,92 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}{{ cl.opts.verbose_name_plural|capfirst }} | Serba 10 Ribu Admin{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static "admin/css/changelists.css" %}">
+  {{ media.css }}
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  {{ media.js }}
+  <script src="{% static 'admin/js/filters.js' %}" defer></script>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-list{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Top Title & Action Header Banner -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2.5">
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight m-0">
+                    {{ cl.opts.verbose_name_plural|capfirst }}
+                </h1>
+                <span class="text-xs font-black text-brand-800 bg-red-50 border border-red-200 px-3 py-1 rounded-full shadow-xs">
+                    {{ cl.result_count }} Data
+                </span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium mt-1">
+                Kelola master data {{ cl.opts.verbose_name_plural|lower }} Serba 10 Ribu Group secara terintegrasi.
+            </p>
+        </div>
+
+        <!-- Add Button (Prominent Warm Amber CTA) -->
+        {% if has_add_permission %}
+        <div class="w-full sm:w-auto">
+            <a href="{% url cl.opts|admin_urlname:'add' %}" 
+               class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-brand-600/25 transition-all">
+                <span>➕</span>
+                <span>Tambah {{ cl.opts.verbose_name|capfirst }} Baru</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Main Table & Filter Grid -->
+    <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+        <div class="changelist-form-container">
+            {% block search %}{% search_form cl %}{% endblock %}
+            {% block date_hierarchy %}{% if cl.date_hierarchy %}{% date_hierarchy cl %}{% endif %}{% endblock %}
+
+            <form id="changelist-form" method="post"{% if cl.formset and cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
+            {% if cl.formset %}
+              <div>{{ cl.formset.management_form }}</div>
+            {% endif %}
+
+            {% block result_list %}
+              {% if action_form and actions_on_top and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+              <div class="md:hidden flex items-center justify-between text-[11px] font-bold text-slate-400 mb-2 px-1">
+                  <span>💡 Geser tabel ke samping untuk melihat kolom</span>
+                  <span>↔️</span>
+              </div>
+              {% result_list cl %}
+              {% if action_form and actions_on_bottom and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+            {% endblock %}
+            {% block pagination %}{% pagination cl %}{% endblock %}
+            </form>
+        </div>
+        
+        {% block filters %}
+          {% if cl.has_filters %}
+            <nav id="changelist-filter" aria-labelledby="changelist-filter-header" class="bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+              <h2 id="changelist-filter-header" class="text-xs font-black uppercase tracking-wider">
+                Filter Data
+              </h2>
+              {% if cl.is_facets_optional or cl.has_active_filters %}<div id="changelist-filter-extra-actions" class="p-3 bg-amber-50/50 border-b border-amber-100 text-xs">
+                {% if cl.is_facets_optional %}<h3><a href="{{ cl.get_facet_toggle_url }}" id="changelist-filter-facet-toggle">{% if cl.add_facets %}{% translate "Hide counts" %}{% else %}{% translate "Show counts" %}{% endif %}</a></h3>{% endif %}
+                {% if cl.has_active_filters %}<h3><a href="{{ cl.clear_all_filters_query_string }}" class="font-bold text-rose-600">✕ Hapus Semua Filter</a></h3>{% endif %}
+              </div>{% endif %}
+              {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+            </nav>
+          {% endif %}
+        {% endblock %}
+    </div>
+
+</div>
+{% endblock %}

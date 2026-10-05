@@ -1,0 +1,106 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{% if add %}Tambah {{ opts.verbose_name|capfirst }} Baru{% else %}Ubah {{ original }}{% endif %} | Serba 10 Ribu Admin{% endblock %}
+
+{% block extrahead %}{{ block.super }}
+<script src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "admin/css/forms.css" %}">{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-5xl">
+    
+    <!-- Header Banner with Title and Back button -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-brand-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
+                    {{ opts.verbose_name|capfirst }}
+                </span>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1.5 mb-0">
+                {% if add %}
+                    Tambah {{ opts.verbose_name|capfirst }} Baru
+                {% else %}
+                    Ubah Data: {{ original }}
+                {% endif %}
+            </h1>
+            <p class="text-xs text-slate-500 font-medium mt-1">
+                Pastikan seluruh kolom yang berbintang merah terisi dengan benar.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+            {% block object-tools %}
+            {% if change and not is_popup %}
+              <ul class="object-tools m-0 p-0 flex items-center gap-2 flex-wrap">
+                {% block object-tools-items %}
+                  {% change_form_object_tools %}
+                {% endblock %}
+              </ul>
+            {% endif %}
+            {% endblock %}
+
+            <a href="{% url opts|admin_urlname:'changelist' %}" 
+               class="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3.5 sm:px-4 py-2 rounded-xl transition-colors shadow-xs">
+                <span>←</span>
+                <span>Kembali ke Daftar</span>
+            </a>
+        </div>
+    </div>
+
+    <div id="content-main">
+        <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
+        <div>
+        {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
+        {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">{% endif %}
+        {% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
+        {% if errors %}
+            <div class="p-4 mb-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold">
+                ⚠️ Silakan periksa kembali isian formulir di bawah ini. Ada beberapa kolom yang belum valid.
+                {{ adminform.form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {% block field_sets %}
+        {% for fieldset in adminform %}
+          {% include "admin/includes/fieldset.html" with heading_level=2 prefix="fieldset" id_prefix=0 id_suffix=forloop.counter0 %}
+        {% endfor %}
+        {% endblock %}
+
+        {% block after_field_sets %}{% endblock %}
+
+        {% block inline_field_sets %}
+        {% for inline_admin_formset in inline_admin_formsets %}
+            {% include inline_admin_formset.opts.template %}
+        {% endfor %}
+        {% endblock %}
+
+        {% block after_related_objects %}{% endblock %}
+
+        {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
+
+        {% block admin_change_form_document_ready %}
+            <script id="django-admin-form-add-constants"
+                    src="{% static 'admin/js/change_form.js' %}"
+                    {% if adminform and add %}
+                        data-model-name="{{ opts.model_name }}"
+                    {% endif %}
+                    async>
+            </script>
+        {% endblock %}
+
+        {# JavaScript for prepopulated fields #}
+        {% prepopulated_fields_js %}
+
+        </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

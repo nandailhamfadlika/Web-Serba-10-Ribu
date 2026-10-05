@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Serba 10 Ribu | {{ selected_branch.name }} - Store Locator & Live Stok{% endblock %}
+
+{% block content %}
+<div id="home-storefront" data-selected-branch="{{ selected_branch.slug }}">
+
+<!-- Top Hero & Branch Switcher Section -->
+<section id="gerai-selector" class="bg-gradient-to-b from-brand-50/70 via-white to-[#FAFAFA] pt-5 sm:pt-8 pb-7 sm:pb-10 border-b border-red-100">
+    <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+        
+        <!-- Hero Header -->
+        <div class="text-center max-w-2xl mx-auto mb-6 sm:mb-8">
+            <!-- Official Branch Logo Presentation -->
+            <div class="inline-block p-1 bg-white rounded-2xl border-2 border-brand-200 shadow-md shadow-brand-500/10 mb-3 sm:mb-4 transition-transform hover:scale-105">
+                <img src="{{ selected_branch.logo_url }}" alt="Logo Resmi {{ selected_branch.name }}" class="h-16 sm:h-22 w-auto object-contain rounded-xl">
+            </div>
+            <h1 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                Sarapan & Kudapan Segar <br class="hidden sm:inline"/>
+                <span class="text-brand-600">Semua Serba Rp10.000</span>
+            </h1>
+            <p class="mt-2 text-xs sm:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed px-2">
+                Pilih gerai terdekat untuk memantau stok ready pagi ini atau intip menu lezat titipan puluhan mitra UMKM untuk besok subuh.
+            </p>
+        </div>
+
+        <!-- Branch Selector Tabs & Geolocation Button -->
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white p-2 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for branch in branches %}
+                    <a href="?branch={{ branch.slug }}" 
+                       class="relative flex items-center justify-between p-2.5 sm:p-3 rounded-xl border transition-all duration-200 min-h-[52px]
+                       {% if branch.slug == selected_branch.slug %}
+                           bg-brand-600 border-brand-600 text-white shadow-md shadow-brand-600/30
+                       {% else %}
+                           bg-slate-50 hover:bg-red-50/50 hover:border-brand-200 border-slate-200 text-slate-700
+                       {% endif %}">
+                        <div class="flex items-center gap-2.5 sm:gap-3">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center p-0.5 bg-white border border-slate-200/80 overflow-hidden flex-shrink-0 shadow-xs">
+                                <img src="{{ branch.logo_url }}" alt="Logo {{ branch.name }}" class="w-full h-full object-contain">
+                            </div>
+                            <div class="text-left">
+                                <div class="font-extrabold text-xs sm:text-sm leading-tight {% if branch.slug == selected_branch.slug %}text-white{% else %}text-slate-900{% endif %}">
+                                    {{ branch.name }}
+                                </div>
+                                <div class="text-[10px] sm:text-[11px] opacity-80 line-clamp-1 mt-0.5">
+                                    {{ branch.address|truncatewords:6 }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Badge Jarak Geolocation (Dihitung dinamis via JavaScript) -->
+                        <span id="distance-badge-{{ branch.slug }}" 
+                              class="hidden text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md
+                              {% if branch.slug == selected_branch.slug %}
+                                  bg-white text-brand-700 shadow-sm
+                              {% else %}
+                                  bg-brand-100 text-brand-800
+                              {% endif %}">
+                            0.0 km
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <!-- Geolocation Action Trigger -->
+                <div class="mt-2.5 pt-2.5 sm:mt-3 sm:pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5 px-1 sm:px-2">
+                    <button id="btn-find-nearest" type="button"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 border border-slate-200 hover:border-brand-200 transition-all min-h-[44px]">
+                        <svg class="w-4 h-4 text-brand-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span>Cari Cabang Terdekat Saya (GPS)</span>
+                    </button>
+                    <span class="text-[11px] text-slate-600 font-semibold flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        Jam Operasional: {{ selected_branch.opening_hours }}
+                    </span>
+                </div>
+
+                <!-- Status Banner Hasil Geolocation -->
+                <div id="geo-status-banner" class="hidden mt-3 px-1"></div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Web-GIS Interactive Leaflet Map Section -->
+<section id="peta-gerai" class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 -mt-4 mb-10 sm:mb-12">
+    <div class="bg-white rounded-3xl p-3 sm:p-4 shadow-xl shadow-slate-200/60 border border-slate-200/80 overflow-hidden">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 px-1 sm:px-2 pt-1">
+            <div class="flex items-center gap-2.5 sm:gap-3">
+                <img src="{{ selected_branch.logo_url }}" alt="Logo" class="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl border border-red-100 p-0.5 bg-white shadow-xs shrink-0">
+                <div>
+                    <h2 class="text-sm sm:text-lg font-black text-slate-900 flex items-center gap-1">
+                        <span class="text-brand-600">🗺️ Peta Navigasi:</span>
+                        <span>{{ selected_branch.name }}</span>
+                    </h2>
+                    <p class="text-[11px] sm:text-xs text-slate-500 line-clamp-1">
+                        {{ selected_branch.address }}
+                    </p>
+                </div>
+            </div>
+            <a href="{{ selected_branch.gmaps_url }}" target="_blank" rel="noopener noreferrer" 
+               class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition-colors min-h-[44px]">
+                <svg class="w-4 h-4 text-white shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+                <span>Buka Petunjuk Arah Google Maps</span>
+            </a>
+        </div>
+
+        <!-- The Leaflet Map Canvas -->
+        <div id="store-map" class="rounded-2xl border border-slate-200 shadow-inner"></div>
+
+        <!-- Mobile Touch Helper Tip -->
+        <div class="mt-2.5 px-2 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400">
+            <span>👆 Ketuk pin merah untuk rute & info jam buka</span>
+            <span>📍 Area Bogor</span>
+        </div>
+
+    </div>
+</section>
+
+<!-- Content Grid: Live In-Store Inventory & Intip Menu Besok -->
+<section id="katalog-menu" class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pb-16">
+    <div class="space-y-10 sm:space-y-14">
+
+        <!-- 1. Live In-Store Inventory (Stok Pagi Hari Ini) -->
+        <div>
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 mb-5 sm:mb-6 pb-4 border-b border-slate-200">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-100 text-emerald-800 mb-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Ready Stock Hari Ini ({{ today|date:"d M Y" }})
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        Katalog Menu Tersedia di Gerai
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500">
+                        Dipasok langsung subuh hari dari mitra UMKM lokal di {{ selected_branch.name }}.
+                    </p>
+                </div>
+
+                <!-- Filter Kategori Kancing (Horizontal Swipe on Mobile) -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full no-scrollbar">
+                    <button type="button" data-category="all"
+                            class="category-filter-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-xs transition-all min-h-[38px] sm:min-h-[40px]">
+                        Semua Menu
+                    </button>
+                    <button type="button" data-category="makanan_berat"
+                            class="category-filter-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-red-50 hover:text-brand-700 hover:border-brand-200 transition-all min-h-[38px] sm:min-h-[40px]">
+                        🍱 Makanan Berat
+                    </button>
+                    <button type="button" data-category="snack"
+                            class="category-filter-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-red-50 hover:text-brand-700 hover:border-brand-200 transition-all min-h-[38px] sm:min-h-[40px]">
+                        🥐 Snack & Roti
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Cards Grid: 2 Columns on Mobile, 4 Columns on Desktop -->
+            {% if live_stocks %}
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+                {% for stock in live_stocks %}
+                <div class="group menu-item-card bg-white rounded-2xl border border-slate-200/80 hover:border-brand-200 shadow-xs hover:shadow-lg hover:shadow-brand-600/5 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                     data-category="{{ stock.product.category }}">
+                    
+                    <div>
+                        <!-- Header Card: Culinary Visual Presentation -->
+                        <div class="relative aspect-[4/3] bg-gradient-to-br from-red-50/60 via-rose-50/30 to-amber-50/40 overflow-hidden flex items-center justify-center border-b border-slate-100">
+                            {% if stock.product.photo %}
+                                <img src="{{ stock.product.photo.url }}" 
+                                     alt="{{ stock.product.name }}" 
+                                     loading="lazy"
+                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            {% else %}
+                                <div class="text-center p-2 sm:p-4">
+                                    <div class="text-3xl sm:text-5xl mb-1 sm:mb-2 filter drop-shadow-xs group-hover:scale-110 transition-transform duration-200">
+                                        {% if stock.product.category == 'makanan_berat' %}🍱
+                                        {% elif stock.product.category == 'snack' %}🥐
+                                        {% elif stock.product.category == 'minuman' %}🧃
+                                        {% else %}🍽️{% endif %}
+                                    </div>
+                                    <span class="inline-block text-[9px] sm:text-[11px] font-extrabold text-brand-900 bg-white/80 px-2 py-0.5 rounded-full border border-red-100">
+                                        Sajian UMKM
+                                    </span>
+                                </div>
+                            {% endif %}
+
+                            <!-- Category Badge (Top Left) -->
+                            <div class="absolute top-2 left-2 sm:top-3 sm:left-3 bg-white/95 backdrop-blur-xs text-slate-700 text-[9px] sm:text-[11px] font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-slate-200/70 shadow-xs flex items-center gap-1">
+                                <span>
+                                    {% if stock.product.category == 'makanan_berat' %}🍱
+                                    {% elif stock.product.category == 'snack' %}🥐
+                                    {% elif stock.product.category == 'minuman' %}🧃
+                                    {% else %}🍽️{% endif %}
+                                </span>
+                                <span class="hidden xs:inline">{{ stock.product.get_category_display }}</span>
+                            </div>
+
+                            <!-- Availability Pill (Top Right) -->
+                            <div class="absolute top-2 right-2 sm:top-3 sm:right-3">
+                                {% if stock.stock_left > 0 %}
+                                    <span class="inline-flex items-center gap-1 bg-white/95 backdrop-blur-xs text-emerald-800 text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-emerald-200/80 shadow-xs">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Ready
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center gap-1 bg-white/95 backdrop-blur-xs text-rose-700 text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-rose-200 shadow-xs">
+                                        Habis
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Out-of-Stock Dimming Overlay -->
+                            {% if stock.stock_left <= 0 %}
+                            <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-[1px] flex items-center justify-center p-2 text-center">
+                                <span class="bg-white/95 text-rose-700 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl border border-rose-200 shadow-md">
+                                    Habis Terjual
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Card Body: Culinary Identity & Artisan Partner -->
+                        <div class="p-2.5 sm:p-4">
+                            <div class="flex items-center gap-1 text-[10px] sm:text-xs text-slate-500 mb-1">
+                                <span class="text-xs">👩‍🍳</span>
+                                <span class="font-bold text-brand-800 truncate" title="{{ stock.partner.name }}">
+                                    {{ stock.partner.name }}
+                                </span>
+                            </div>
+                            <h3 class="font-black text-slate-900 text-xs sm:text-base leading-snug line-clamp-2 group-hover:text-brand-600 transition-colors">
+                                {{ stock.product.name }}
+                            </h3>
+                        </div>
+                    </div>
+
+                    <!-- Card Footer: Stock Availability Indicator -->
+                    <div class="p-2.5 sm:p-4 pt-0">
+                        <div class="pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs">
+                            <span class="text-slate-400 font-medium hidden xs:inline">Stok:</span>
+                            {% if stock.stock_left > 0 %}
+                                <span class="font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
+                                    {{ stock.stock_left }} ready
+                                </span>
+                            {% else %}
+                                <span class="font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
+                                    Habis
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-10 sm:py-12 bg-white rounded-2xl border border-dashed border-red-200 p-6 sm:p-8">
+                <div class="text-3xl sm:text-4xl mb-2 sm:mb-3">🍳</div>
+                <h3 class="text-sm sm:text-base font-bold text-slate-800">Belum Ada Stok In-Take Pagi Ini</h3>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    Kasir gerai {{ selected_branch.name }} sedang melakukan proses serah terima drop barang subuh.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 2. Intip Menu Besok (H-1 Absensi Operator-Assisted) -->
+        <div id="menu-besok" class="bg-gradient-to-br from-red-50/80 via-white to-red-50/40 rounded-3xl p-5 sm:p-8 text-slate-800 border border-red-200/90 shadow-sm">
+            <div class="max-w-2xl mb-5 sm:mb-6">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-brand-100 text-brand-900 border border-brand-200 uppercase tracking-wider mb-2">
+                    ✨ Intip Menu Besok Subuh ({{ tomorrow|date:"d M Y" }})
+                </span>
+                <h2 class="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    Mitra UMKM yang Terkonfirmasi Siap Drop Besok
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                    Berdasarkan konfirmasi kesiapan drop H-1 via koordinasi WhatsApp di {{ selected_branch.name }}.
+                </p>
+            </div>
+
+            {% if attendances_tomorrow %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                {% for att in attendances_tomorrow %}
+                <div class="bg-white border border-red-100 hover:border-brand-400 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between transition-colors shadow-xs">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-extrabold text-brand-800 text-xs sm:text-sm">
+                                {{ att.partner.name }}
+                            </span>
+                            <span class="text-[10px] sm:text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                                Siap Hadir
+                            </span>
+                        </div>
+                        <div class="text-[11px] sm:text-xs text-slate-600 flex items-center gap-1.5 mb-2">
+                            <span>📦 Status:</span>
+                            <strong class="text-emerald-700 font-bold">Terkonfirmasi Siap Kirim</strong>
+                        </div>
+                        {% if att.notes %}
+                        <p class="text-[11px] sm:text-xs text-slate-600 italic bg-red-50/50 p-2 sm:p-2.5 rounded-lg border border-red-100">
+                            "{{ att.notes }}"
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-6 sm:py-8 bg-white/80 rounded-2xl border border-dashed border-red-200 p-5 sm:p-6">
+                <p class="text-xs text-slate-500">
+                    Operator gerai sedang merekap konfirmasi WhatsApp mitra untuk jadwal besok pagi.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+
+<!-- Mobile Floating Thumb Navigation Bar (Hidden on Tablets & Desktop) -->
+<nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-red-100/90 shadow-lg px-2 py-1 flex items-center justify-around">
+    <a href="#gerai-selector" class="flex flex-col items-center justify-center py-1 px-2 text-[10px] font-bold text-slate-600 hover:text-brand-700 transition-colors">
+        <span class="text-base leading-none mb-0.5">📍</span>
+        <span class="truncate max-w-[70px]">{{ selected_branch.name }}</span>
+    </a>
+    <a href="#peta-gerai" class="flex flex-col items-center justify-center py-1 px-2 text-[10px] font-bold text-slate-600 hover:text-brand-700 transition-colors">
+        <span class="text-base leading-none mb-0.5">🗺️</span>
+        <span>Peta</span>
+    </a>
+    <a href="#katalog-menu" class="flex flex-col items-center justify-center py-1 px-2 text-[10px] font-extrabold text-brand-700 transition-colors">
+        <span class="text-base leading-none mb-0.5">🍱</span>
+        <span>Menu Ready</span>
+    </a>
+    <a href="#menu-besok" class="flex flex-col items-center justify-center py-1 px-2 text-[10px] font-bold text-slate-600 hover:text-brand-700 transition-colors">
+        <span class="text-base leading-none mb-0.5">✨</span>
+        <span>Menu Besok</span>
+    </a>
+</nav>
+
+</div>
+
+<!-- Inject Branches Data JSON for Leaflet.js -->
+{{ branches_json|json_script:"branches-data-json" }}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/store-locator.js' %}?v=1.2"></script>
+{% endblock %}

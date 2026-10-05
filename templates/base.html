@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-50 antialiased scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Serba 10 Ribu Group | Sarapan & Kuliner Bogor Serba Rp10.000{% endblock %}</title>
+    
+    <!-- Meta tags SEO & PWA -->
+    <meta name="description" content="Jaringan gerai konsinyasi kuliner sarapan dan kudapan serba Rp10.000 di Bogor. Cabang Ciomas & Dramaga. Cek stok ready & lokasi terdekat.">
+    <meta name="theme-color" content="#e52329">
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    screens: {
+                        'xs': '420px',
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            200: '#fecaca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#ef4444',
+                            600: '#e52329',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Responsive map container styling */
+        #store-map {
+            height: 270px;
+            width: 100%;
+            z-index: 10;
+        }
+        @media (min-width: 640px) {
+            #store-map {
+                height: 360px;
+            }
+        }
+        @media (min-width: 768px) {
+            #store-map {
+                height: 430px;
+            }
+        }
+
+        /* Utility to hide horizontal scrollbar on mobile while keeping smooth touch swipe */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Custom marker pulse animation */
+        .leaflet-custom-pulse {
+            width: 18px;
+            height: 18px;
+            background: #e52329;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(229, 35, 41, 0.7);
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(229, 35, 41, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(229, 35, 41, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(229, 35, 41, 0); }
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-full flex flex-col text-slate-800 bg-[#FAFAFA] selection:bg-brand-600 selection:text-white pb-16 sm:pb-0">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-red-100/90 shadow-2xs">
+        <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <!-- Brand Logo & Identity -->
+                <a href="{% url 'branches:home' %}" class="flex items-center gap-2 sm:gap-3 group min-h-[44px]">
+                    <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white flex items-center justify-center p-0.5 border border-red-200 shadow-xs group-hover:scale-105 transition-transform overflow-hidden flex-shrink-0">
+                        <img src="/media/Logo/Serba10ribuciomas.jpeg" alt="Logo Serba 10 Ribu Group" class="w-full h-full object-contain">
+                    </div>
+                    <div>
+                        <div class="font-black text-slate-900 tracking-tight text-base sm:text-lg leading-tight flex items-center gap-1 sm:gap-1.5">
+                            <span>Serba 10 Ribu</span>
+                            <span class="text-[9px] sm:text-xs font-black px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 border border-brand-200">GROUP</span>
+                        </div>
+                        <div class="text-[10px] sm:text-[11px] text-slate-500 font-medium hidden sm:block">
+                            Kuliner Sarapan & Kudapan Bogor
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Navigation Links for Public Storefront -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <span class="inline-flex items-center px-2 py-1 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 mr-1 sm:mr-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="hidden md:inline">Buka </span>06:00 - 10:00<span class="hidden sm:inline"> WIB</span>
+                    </span>
+                    <a href="{% url 'admin:index' %}" 
+                       class="text-xs font-bold text-slate-700 hover:text-brand-700 bg-white hover:bg-brand-50 border border-slate-200 hover:border-brand-200 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl transition-all min-h-[38px] sm:min-h-[40px] flex items-center gap-1.5 shadow-2xs">
+                        <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <span class="hidden sm:inline">Portal Staf</span>
+                        <span class="sm:hidden text-[11px]">Staf</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Block -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer (Clean Red & White Culinary Theme) -->
+    <footer class="bg-white text-slate-600 py-10 mt-16 border-t border-red-100 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center gap-2.5 mb-3 justify-center sm:justify-start">
+                        <img src="/media/Logo/Serba10ribuciomas.jpeg" alt="Logo" class="w-8 h-8 object-contain rounded-lg border border-red-200 p-0.5">
+                        <h3 class="text-slate-900 font-extrabold text-base">Serba 10 Ribu Group Bogor</h3>
+                    </div>
+                    <p class="text-xs sm:text-sm leading-relaxed text-slate-600">
+                        Pusat kuliner konsinyasi sarapan pagi serba Rp10.000 dengan sistem bagi hasil adil untuk puluhan mitra UMKM lokal di Kabupaten & Kota Bogor.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-slate-900 font-extrabold text-base mb-2">Jaringan Gerai Fisik Resmi</h3>
+                    <ul class="text-xs sm:text-sm space-y-1.5 text-slate-600">
+                        <li>📍 <strong>Cabang Ciomas:</strong> Jl. Raya Ciomas No. 320</li>
+                        <li>📍 <strong>Cabang Dramaga:</strong> Jl. Raya Dramaga (Ruko Margajaya / Koridor IPB)</li>
+                        <li class="pt-1 text-brand-700 font-bold">⏰ Buka setiap pagi: Subuh s.d. Habis (10:00 WIB)</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-slate-900 font-extrabold text-base mb-2">Aturan & Operasional</h3>
+                    <p class="text-xs sm:text-sm leading-relaxed text-slate-600">
+                        Gerai melayani pembelian langsung secara offline (tanpa delivery order). Silakan cek katalog live sebelum berkunjung ke gerai terdekat.
+                    </p>
+                </div>
+            </div>
+            <div class="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+                <p>&copy; 2026 Serba 10 Ribu Group. All rights reserved.</p>
+                <p>Platform Web-GIS Hyperlocal Store Locator & Live Consignment.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet.js Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

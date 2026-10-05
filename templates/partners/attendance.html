@@ -1,0 +1,387 @@
+{% extends 'admin/admin_base.html' %}
+{% load static %}
+
+{% block title %}Absensi Drop Barang H-1 | Serba 10 Ribu {{ selected_branch.name }}{% endblock %}
+
+{% block content %}
+<!-- Top Header & Filter Controls -->
+<section class="bg-white border-b border-slate-200 py-4 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 text-blue-900 border border-blue-300">
+                        📋 JADWAL BUKA TOKO (H-1)
+                    </span>
+                    <span class="text-xs text-slate-500 font-semibold">
+                        Rekap Kesiapan Mitra UMKM
+                    </span>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
+                    Absensi Kesiapan Mitra: {{ selected_branch.name }}
+                </h1>
+            </div>
+
+            <!-- Branch & Date Selector -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Branch Selector -->
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                    {% for b in branches %}
+                    <a href="?branch={{ b.slug }}&date={{ target_date|date:'Y-m-d' }}" 
+                       class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all min-h-[36px] flex items-center
+                       {% if b.slug == selected_branch.slug %}
+                           bg-brand-600 text-white shadow-sm
+                       {% else %}
+                           text-slate-600 hover:text-slate-900
+                       {% endif %}">
+                        {{ b.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <!-- Quick Date Presets (H-1 vs Hari Ini) -->
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                    <a href="?branch={{ selected_branch.slug }}&date={{ tomorrow|date:'Y-m-d' }}" 
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 min-h-[36px]
+                       {% if target_date == tomorrow %}bg-white text-brand-800 shadow-xs border border-slate-200{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+                        <span>⚡ Besok (H-1)</span>
+                    </a>
+                    <a href="?branch={{ selected_branch.slug }}&date={{ today|date:'Y-m-d' }}" 
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 min-h-[36px]
+                       {% if target_date == today %}bg-white text-slate-900 shadow-xs border border-slate-200{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+                        <span>📍 Hari Ini</span>
+                    </a>
+                </div>
+
+                <form method="GET" class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                    <input type="hidden" name="branch" value="{{ selected_branch.slug }}">
+                    <label class="text-xs font-bold text-slate-600">Pilih Tgl:</label>
+                    <input type="date" name="date" value="{{ target_date|date:'Y-m-d' }}" 
+                           onchange="this.form.submit()"
+                           class="text-xs font-bold bg-white px-2 py-1 rounded-lg border border-slate-300 text-slate-800">
+                </form>
+
+            </div>
+
+        </div>
+
+        <!-- Attendance Stats Counters -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-100">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <div class="text-[11px] font-bold text-slate-500 uppercase">Total Mitra</div>
+                <div id="stat-total" class="text-xl font-black text-slate-900">{{ total_partners }}</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                <div class="text-[11px] font-bold text-emerald-700 uppercase">🟢 Siap Hadir</div>
+                <div id="stat-hadir" class="text-xl font-black text-emerald-800">{{ hadir_count }}</div>
+            </div>
+            <div class="bg-rose-50 border border-rose-200 rounded-xl p-3">
+                <div class="text-[11px] font-bold text-rose-700 uppercase">🔴 Libur / Absen</div>
+                <div id="stat-libur" class="text-xl font-black text-rose-800">{{ libur_count }}</div>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <div class="text-[11px] font-bold text-amber-700 uppercase">⚪ Belum Konfirmasi</div>
+                <div id="stat-belum" class="text-xl font-black text-amber-800">{{ belum_absen_count }}</div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Feedback Messages -->
+{% if messages %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+    {% for message in messages %}
+    <div class="p-3.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Partner Attendance Table Section -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/60 border border-slate-200">
+        
+        <!-- Flexible H-1 Banner & Autosave Toast -->
+        <div class="mb-5 bg-gradient-to-r from-amber-50 to-orange-50/70 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div class="flex items-start sm:items-center gap-2.5 text-xs text-amber-950 font-medium">
+                <span class="text-lg leading-none">💡</span>
+                <span><b>Bebas Dicicil Kapan Saja:</b> Rekap kesiapan mitra untuk jadwal <b>{{ target_date|date:'d F Y' }}</b> dapat diisi bertahap sepanjang hari H-1 (pagi, siang, atau sore). Setiap pilihan kehadiran dan catatan otomatis tersimpan langsung ke sistem.</span>
+            </div>
+            <div id="autosave-toast" class="hidden text-xs font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-3.5 py-1.5 rounded-xl shrink-0 flex items-center gap-1.5 shadow-xs">
+                <span>✅</span> <span>Tersimpan otomatis</span>
+            </div>
+        </div>
+
+        <!-- Filter Toolbar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
+            <!-- Search Input -->
+            <div class="w-full sm:w-72">
+                <input type="text" id="filter-partner-attendance" 
+                       placeholder="🔍 Cari nama mitra..." 
+                       class="w-full text-xs rounded-xl border border-slate-200 px-3.5 py-2.5 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <!-- Quick Filter Status Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+                <button type="button" data-filter="all" class="att-filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow">
+                    Semua ({{ total_partners }})
+                </button>
+                <button type="button" data-filter="hadir" class="att-filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Hadir ({{ hadir_count }})
+                </button>
+                <button type="button" data-filter="libur" class="att-filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Libur ({{ libur_count }})
+                </button>
+                <button type="button" data-filter="belum" class="att-filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Belum ({{ belum_absen_count }})
+                </button>
+            </div>
+        </div>
+
+        <!-- Form Batch Save -->
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-slate-500 uppercase tracking-wider font-extrabold text-[11px] bg-slate-50/70">
+                            <th class="py-3 px-3 rounded-l-xl">No</th>
+                            <th class="py-3 px-3">Nama Mitra UMKM</th>
+                            <th class="py-3 px-3 text-center">Status Kehadiran</th>
+                            <th class="py-3 px-3">Catatan / Rencana Menu</th>
+                            <th class="py-3 px-3 text-center rounded-r-xl">Aksi Cepat</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for row in partner_attendances %}
+                        <tr class="attendance-row hover:bg-slate-50/80 transition-colors" 
+                            data-name="{{ row.partner.name|lower }}" 
+                            data-status="{{ row.status }}"
+                            id="row-partner-{{ row.partner.id }}">
+                            
+                            <!-- Hidden ID for batch POST -->
+                            <input type="hidden" name="partner_id" value="{{ row.partner.id }}">
+
+                            <td class="py-3.5 px-3 text-slate-400 font-bold">
+                                {{ forloop.counter }}
+                            </td>
+
+                            <td class="py-3.5 px-3">
+                                <div class="font-extrabold text-slate-900 text-sm">
+                                    {{ row.partner.name }}
+                                </div>
+                                {% if row.partner.phone_number %}
+                                <a href="https://wa.me/{{ row.partner.phone_number|cut:' '|cut:'-' }}" target="_blank" 
+                                   class="text-[11px] text-emerald-600 hover:underline flex items-center gap-1 font-semibold mt-0.5">
+                                    💬 WA: {{ row.partner.phone_number }}
+                                </a>
+                                {% endif %}
+                            </td>
+
+                            <!-- Status Radio Toggle with Instant Auto-save -->
+                            <td class="py-3.5 px-3 text-center">
+                                <div class="inline-flex rounded-xl p-1 bg-slate-100 border border-slate-200">
+                                    <label class="btn-label-hadir px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1
+                                        {% if row.status == 'hadir' %}bg-emerald-600 text-white shadow{% else %}text-slate-600 hover:text-emerald-700{% endif %}"
+                                        onclick="saveAttendanceAjax('{{ row.partner.id }}', 'hadir')">
+                                        <input type="radio" name="status_{{ row.partner.id }}" value="hadir" 
+                                               {% if row.status == 'hadir' %}checked{% endif %} class="hidden">
+                                        Hadir
+                                    </label>
+                                    <label class="btn-label-libur px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1
+                                        {% if row.status == 'libur' %}bg-rose-600 text-white shadow{% else %}text-slate-600 hover:text-rose-700{% endif %}"
+                                        onclick="saveAttendanceAjax('{{ row.partner.id }}', 'libur')">
+                                        <input type="radio" name="status_{{ row.partner.id }}" value="libur" 
+                                               {% if row.status == 'libur' %}checked{% endif %} class="hidden">
+                                        Libur
+                                    </label>
+                                </div>
+                            </td>
+
+                            <!-- Notes Input with Auto-save on change -->
+                            <td class="py-3.5 px-3">
+                                <input type="text" name="notes_{{ row.partner.id }}" 
+                                       value="{{ row.notes }}" 
+                                       onchange="saveAttendanceAjax('{{ row.partner.id }}', null)"
+                                       placeholder="Contoh: Bawa 25 porsi fresh..." 
+                                       class="w-full text-xs rounded-lg border border-slate-300 px-3 py-1.5 text-slate-800 bg-white focus:ring-2 focus:ring-brand-500">
+                            </td>
+
+                            <!-- Quick Actions -->
+                            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1">
+                                    <button type="button" 
+                                            onclick="saveAttendanceAjax('{{ row.partner.id }}', 'hadir')"
+                                            class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition-all">
+                                        ⚡ Hadir
+                                    </button>
+                                    <button type="button" 
+                                            onclick="saveAttendanceAjax('{{ row.partner.id }}', 'reset')"
+                                            title="Reset ke status belum konfirmasi"
+                                            class="px-2 py-1 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-700 border border-slate-200 rounded-lg text-xs font-bold transition-all">
+                                        ⚪ Reset
+                                    </button>
+                                </div>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Sticky Save Toolbar at Bottom -->
+            <div class="sticky bottom-4 mt-6 p-4 bg-white/95 backdrop-blur text-slate-800 border border-amber-200 rounded-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs text-slate-600 font-semibold text-center sm:text-left">
+                    💡 Perubahan kehadiran dan catatan tersimpan otomatis secara realtime. Anda dapat mencicil pengisian kapan saja sepanjang H-1.
+                </div>
+                <button type="submit" 
+                        class="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-xl shadow-md shadow-brand-600/25 transition-all text-xs sm:text-sm min-h-[40px]">
+                    💾 Simpan Semua Rekap
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Filter pencarian mitra di tabel
+document.getElementById('filter-partner-attendance').addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    document.querySelectorAll('.attendance-row').forEach(row => {
+        const name = row.dataset.name;
+        row.style.display = name.includes(q) ? '' : 'none';
+    });
+});
+
+// Filter status tab pills
+document.querySelectorAll('.att-filter-pill').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.att-filter-pill').forEach(b => {
+            b.classList.remove('bg-brand-600', 'text-white', 'shadow');
+            b.classList.add('bg-slate-100', 'text-slate-700');
+        });
+        this.classList.remove('bg-slate-100', 'text-slate-700');
+        this.classList.add('bg-brand-600', 'text-white', 'shadow');
+
+        const filter = this.dataset.filter;
+        document.querySelectorAll('.attendance-row').forEach(row => {
+            if (filter === 'all' || row.dataset.status === filter) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
+
+// Comprehensive AJAX auto-save for status, notes, and reset
+function saveAttendanceAjax(partnerId, status) {
+    const row = document.getElementById(`row-partner-${partnerId}`);
+    if (!row) return;
+
+    const notesInput = row.querySelector(`input[name="notes_${partnerId}"]`);
+    const notes = notesInput ? notesInput.value.trim() : '';
+    const branchId = '{{ selected_branch.id }}';
+    const dateStr = '{{ target_date|date:"Y-m-d" }}';
+
+    const fd = new FormData();
+    fd.append('partner_id', partnerId);
+    fd.append('branch_id', branchId);
+    fd.append('date', dateStr);
+    if (status) {
+        fd.append('status', status);
+    }
+    fd.append('notes', notes);
+
+    fetch('{% url "partners:attendance_toggle_api" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: fd
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const radioHadir = row.querySelector(`input[value="hadir"]`);
+            const radioLibur = row.querySelector(`input[value="libur"]`);
+            const labelHadir = row.querySelector('.btn-label-hadir');
+            const labelLibur = row.querySelector('.btn-label-libur');
+
+            if (data.new_status === 'hadir') {
+                if (radioHadir) radioHadir.checked = true;
+                if (radioLibur) radioLibur.checked = false;
+                if (labelHadir) {
+                    labelHadir.className = 'btn-label-hadir px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1 bg-emerald-600 text-white shadow';
+                }
+                if (labelLibur) {
+                    labelLibur.className = 'btn-label-libur px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1 text-slate-600 hover:text-rose-700';
+                }
+                row.dataset.status = 'hadir';
+            } else if (data.new_status === 'libur') {
+                if (radioLibur) radioLibur.checked = true;
+                if (radioHadir) radioHadir.checked = false;
+                if (labelLibur) {
+                    labelLibur.className = 'btn-label-libur px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1 bg-rose-600 text-white shadow';
+                }
+                if (labelHadir) {
+                    labelHadir.className = 'btn-label-hadir px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1 text-slate-600 hover:text-emerald-700';
+                }
+                row.dataset.status = 'libur';
+            } else {
+                // 'belum' / reset
+                if (radioHadir) radioHadir.checked = false;
+                if (radioLibur) radioLibur.checked = false;
+                if (labelHadir) {
+                    labelHadir.className = 'btn-label-hadir px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1 text-slate-600 hover:text-emerald-700';
+                }
+                if (labelLibur) {
+                    labelLibur.className = 'btn-label-libur px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1 text-slate-600 hover:text-rose-700';
+                }
+                row.dataset.status = 'belum';
+            }
+
+            // Update live counters
+            if (data.counts) {
+                const statTotal = document.getElementById('stat-total');
+                const statHadir = document.getElementById('stat-hadir');
+                const statLibur = document.getElementById('stat-libur');
+                const statBelum = document.getElementById('stat-belum');
+                if (statTotal) statTotal.textContent = data.counts.total;
+                if (statHadir) statHadir.textContent = data.counts.hadir;
+                if (statLibur) statLibur.textContent = data.counts.libur;
+                if (statBelum) statBelum.textContent = data.counts.belum;
+
+                // Update filter tab pills text
+                const pills = document.querySelectorAll('.att-filter-pill');
+                if (pills[0]) pills[0].textContent = `Semua (${data.counts.total})`;
+                if (pills[1]) pills[1].textContent = `Hadir (${data.counts.hadir})`;
+                if (pills[2]) pills[2].textContent = `Libur (${data.counts.libur})`;
+                if (pills[3]) pills[3].textContent = `Belum (${data.counts.belum})`;
+            }
+
+            // Flash autosave toast
+            const toast = document.getElementById('autosave-toast');
+            if (toast) {
+                toast.classList.remove('hidden');
+                clearTimeout(window._toastTimer);
+                window._toastTimer = setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 2200);
+            }
+        }
+    })
+    .catch(e => console.error(e));
+}
+</script>
+{% endblock %}

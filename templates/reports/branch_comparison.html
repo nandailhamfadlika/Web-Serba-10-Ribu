@@ -1,0 +1,264 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Komparasi Head-to-Head: Ciomas vs Dramaga | Serba 10 Ribu Group{% endblock %}
+
+{% block extra_head %}
+<!-- ApexCharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Top Header & Timeframe Filter -->
+<section class="bg-white border-b border-slate-200 py-5 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-100 text-indigo-900 border border-indigo-300">
+                        ⚡ HEAD-TO-HEAD ANALYTICS
+                    </span>
+                    <span class="text-xs text-slate-500 font-semibold">
+                        Performa Lintas Gerai Fisik Bogor
+                    </span>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
+                    Komparasi: Cabang Ciomas vs Cabang Dramaga
+                </h1>
+            </div>
+
+            <!-- Time Range Filters: 1W, 2W, 3W, 1M, 1Y -->
+            <div class="inline-flex p-1 bg-slate-100 rounded-2xl border border-slate-200 overflow-x-auto max-w-full">
+                <button type="button" data-range="1W" class="range-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-sm flex-shrink-0">
+                    1 Minggu (1W)
+                </button>
+                <button type="button" data-range="2W" class="range-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-shrink-0">
+                    2 Minggu (2W)
+                </button>
+                <button type="button" data-range="3W" class="range-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-shrink-0">
+                    3 Minggu (3W)
+                </button>
+                <button type="button" data-range="1M" class="range-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-shrink-0">
+                    1 Bulan (1M)
+                </button>
+                <button type="button" data-range="1Y" class="range-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-shrink-0">
+                    1 Tahun (1Y)
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Head-to-Head Comparison KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5 pt-4 border-t border-slate-100">
+            <!-- Ciomas Card -->
+            <div class="bg-gradient-to-br from-red-50 to-rose-50/40 border border-red-200 rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-black text-brand-800 uppercase">📍 Cabang Ciomas</span>
+                    <span class="w-3 h-3 rounded-full bg-brand-600"></span>
+                </div>
+                <div class="text-2xl font-black text-slate-900" id="kpi-ciomas-omzet">
+                    Rp 0
+                </div>
+                <div class="text-xs text-slate-600 mt-1" id="kpi-ciomas-pcs">
+                    Volume: 0 pcs
+                </div>
+            </div>
+
+            <!-- Dramaga Card -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50/40 border border-blue-200 rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-black text-blue-800 uppercase">📍 Cabang Dramaga</span>
+                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                </div>
+                <div class="text-2xl font-black text-slate-900" id="kpi-dramaga-omzet">
+                    Rp 0
+                </div>
+                <div class="text-xs text-slate-600 mt-1" id="kpi-dramaga-pcs">
+                    Volume: 0 pcs
+                </div>
+            </div>
+
+            <!-- Winner / Performance Crown Card (Red-White Light Theme) -->
+            <div class="bg-gradient-to-br from-red-100 via-red-50 to-rose-100/60 border border-red-200 text-brand-950 rounded-2xl p-4 flex flex-col justify-between shadow-xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-brand-800 uppercase">🏆 Top Performer</span>
+                    <span class="text-lg">👑</span>
+                </div>
+                <div>
+                    <div class="text-xl font-black text-brand-950" id="kpi-winner-name">
+                        Memuat data...
+                    </div>
+                    <div class="text-[11px] text-brand-800 font-semibold mt-0.5" id="kpi-winner-detail">
+                        Berdasarkan total volume penjualan
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Interactive Charts Grid -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- 1. Omzet Comparison Area Chart -->
+    <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/60 border border-slate-200">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div>
+                <h2 class="text-base sm:text-lg font-black text-slate-900">
+                    📈 Perbandingan Tren Omzet Harian (Rp)
+                </h2>
+                <p class="text-xs text-slate-500">
+                    Kuning: Cabang Ciomas | Biru: Cabang Dramaga
+                </p>
+            </div>
+            <span class="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
+                Satuan: Rupiah (Rp)
+            </span>
+        </div>
+        <div id="chart-omzet" class="w-full h-80"></div>
+    </div>
+
+    <!-- 2. Volume Sold Bar Chart -->
+    <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/60 border border-slate-200">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div>
+                <h2 class="text-base sm:text-lg font-black text-slate-900">
+                    📊 Perbandingan Volume Penjualan Barang (Pcs)
+                </h2>
+                <p class="text-xs text-slate-500">
+                    Perbandingan kuantitas menu laku terjual per hari
+                </p>
+            </div>
+            <span class="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
+                Satuan: Pcs
+            </span>
+        </div>
+        <div id="chart-volume" class="w-full h-80"></div>
+    </div>
+
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    let omzetChart = null;
+    let volumeChart = null;
+
+    function formatRupiah(num) {
+        return 'Rp ' + Number(num).toLocaleString('id-ID');
+    }
+
+    function loadComparisonData(range) {
+        fetch(`{% url 'finances:branch_comparison_api' %}?range=${range}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'success') return;
+
+                // Update KPI Cards
+                document.getElementById('kpi-ciomas-omzet').textContent = formatRupiah(data.summary.ciomas.total_omzet);
+                document.getElementById('kpi-ciomas-pcs').textContent = `Volume: ${data.summary.ciomas.total_pcs.toLocaleString('id-ID')} pcs`;
+                
+                document.getElementById('kpi-dramaga-omzet').textContent = formatRupiah(data.summary.dramaga.total_omzet);
+                document.getElementById('kpi-dramaga-pcs').textContent = `Volume: ${data.summary.dramaga.total_pcs.toLocaleString('id-ID')} pcs`;
+
+                document.getElementById('kpi-winner-name').textContent = `Cabang ${data.summary.winner}`;
+
+                // 1. Chart Omzet (Area Chart)
+                const omzetOptions = {
+                    series: data.series_omzet,
+                    chart: {
+                        type: 'area',
+                        height: 320,
+                        toolbar: { show: false },
+                        fontFamily: 'inherit'
+                    },
+                    colors: ['#e52329', '#2563eb'], // Brand Red vs Blue
+                    stroke: { curve: 'smooth', width: 2.5 },
+                    fill: {
+                        type: 'gradient',
+                        gradient: { opacityFrom: 0.45, opacityTo: 0.05 }
+                    },
+                    xaxis: {
+                        categories: data.date_labels,
+                        labels: { style: { fontSize: '11px' } }
+                    },
+                    yaxis: {
+                        labels: {
+                            formatter: val => 'Rp ' + (val / 1000) + 'k'
+                        }
+                    },
+                    tooltip: {
+                        y: { formatter: val => formatRupiah(val) }
+                    }
+                };
+
+                if (omzetChart) {
+                    omzetChart.updateOptions(omzetOptions);
+                } else {
+                    omzetChart = new ApexCharts(document.querySelector("#chart-omzet"), omzetOptions);
+                    omzetChart.render();
+                }
+
+                // 2. Chart Volume (Column/Bar Chart)
+                const volumeOptions = {
+                    series: data.series_pcs,
+                    chart: {
+                        type: 'bar',
+                        height: 320,
+                        toolbar: { show: false },
+                        fontFamily: 'inherit'
+                    },
+                    colors: ['#e52329', '#2563eb'],
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '55%',
+                            borderRadius: 4
+                        }
+                    },
+                    dataLabels: { enabled: false },
+                    stroke: { show: true, width: 2, colors: ['transparent'] },
+                    xaxis: {
+                        categories: data.date_labels,
+                        labels: { style: { fontSize: '11px' } }
+                    },
+                    yaxis: {
+                        labels: { formatter: val => val + ' pcs' }
+                    },
+                    tooltip: {
+                        y: { formatter: val => val + ' pcs terjual' }
+                    }
+                };
+
+                if (volumeChart) {
+                    volumeChart.updateOptions(volumeOptions);
+                } else {
+                    volumeChart = new ApexCharts(document.querySelector("#chart-volume"), volumeOptions);
+                    volumeChart.render();
+                }
+            })
+            .catch(err => console.error('Error fetching comparison data:', err));
+    }
+
+    // Initial load: 1W (1 Minggu)
+    loadComparisonData('1W');
+
+    // Button Range Click Handlers
+    document.querySelectorAll('.range-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.range-btn').forEach(b => {
+                b.classList.remove('bg-brand-600', 'text-white', 'shadow-sm');
+                b.classList.add('text-slate-600');
+            });
+            this.classList.remove('text-slate-600');
+            this.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
+
+            const range = this.dataset.range;
+            loadComparisonData(range);
+        });
+    });
+});
+</script>
+{% endblock %}

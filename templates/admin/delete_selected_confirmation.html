@@ -1,0 +1,168 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls static %}
+
+{% block title %}Hapus Massal {{ objects_name|capfirst }} | Serba 10 Ribu Admin{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} delete-confirmation delete-selected-confirmation{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs text-xs font-bold text-slate-500 mb-4 flex items-center gap-1.5 flex-wrap">
+    <a href="{% url 'admin:index' %}" class="text-slate-600 hover:text-brand-700">🏠 Beranda</a>
+    <span class="text-slate-400">›</span>
+    <a href="{% url 'admin:app_list' app_label=opts.app_label %}" class="text-slate-600 hover:text-brand-700">{{ opts.app_config.verbose_name }}</a>
+    <span class="text-slate-400">›</span>
+    <a href="{% url opts|admin_urlname:'changelist' %}" class="text-slate-600 hover:text-brand-700">{{ opts.verbose_name_plural|capfirst }}</a>
+    <span class="text-slate-400">›</span>
+    <span class="text-rose-600">Hapus Beberapa Objek</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-4 sm:py-8">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xl shadow-slate-100/80">
+        
+        <!-- Danger Badge & Warning Icon -->
+        <div class="flex flex-col items-center text-center mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mb-3.5 shadow-xs">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </div>
+            
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-100/80 text-rose-800 mb-2">
+                <span>⚠️ Penghapusan Massal</span>
+            </div>
+            
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight m-0">
+                Konfirmasi Hapus {{ objects_name|capfirst }}
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                Anda akan menghapus beberapa data sekaligus dari sistem.
+            </p>
+        </div>
+
+        {% if perms_lacking %}
+            <!-- Permission Denied Warning -->
+            <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs sm:text-sm mb-6 space-y-2">
+                <div class="font-extrabold flex items-center gap-2 text-rose-800">
+                    <span>⛔</span>
+                    <span>Penghapusan Massal Ditolak (Izin Kurang)</span>
+                </div>
+                <p class="text-xs text-rose-700 leading-relaxed">
+                    Penghapusan data terpilih akan berakibat menghapus objek terkait lainnya, tetapi akun Anda tidak memiliki hak izin:
+                </p>
+                <div class="p-3 bg-white/80 rounded-xl border border-rose-200/60 font-semibold text-xs text-slate-700">
+                    <ul class="list-disc list-inside space-y-1">
+                        {{ perms_lacking|unordered_list }}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <a href="{% url opts|admin_urlname:'changelist' %}" 
+                   class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">
+                    ← Kembali ke Daftar Data
+                </a>
+            </div>
+
+        {% elif protected %}
+            <!-- Protected Constraint Warning -->
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm mb-6 space-y-2">
+                <div class="font-extrabold flex items-center gap-2 text-amber-800">
+                    <span>🛡️</span>
+                    <span>Data Terlindungi (Protected Constraint)</span>
+                </div>
+                <p class="text-xs text-amber-800 leading-relaxed">
+                    Sebagian atau seluruh data terpilih tidak dapat dihapus karena masih digunakan atau dirujuk oleh data penting lain:
+                </p>
+                <div class="p-3 bg-white/80 rounded-xl border border-amber-200/60 font-semibold text-xs text-slate-700 max-h-48 overflow-y-auto">
+                    <ul class="list-disc list-inside space-y-1">
+                        {{ protected|unordered_list }}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <a href="{% url opts|admin_urlname:'changelist' %}" 
+                   class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">
+                    ← Kembali ke Daftar Data
+                </a>
+            </div>
+
+        {% else %}
+            <!-- Normal Batch Confirmation -->
+            <div class="space-y-4 mb-6">
+                <!-- Summary Chips -->
+                {% if model_count %}
+                <div class="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80">
+                    <div class="text-[11px] font-black uppercase tracking-wider text-amber-800 mb-2 flex items-center gap-1.5">
+                        <span>📊</span>
+                        <span>Ringkasan Jumlah Objek yang Dihapus</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        {% for model_name, object_count in model_count %}
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-800 border border-amber-200 shadow-2xs">
+                            <span class="font-extrabold text-brand-700">{{ object_count }}</span>
+                            <span>{{ model_name|capfirst }}</span>
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Detailed list of objects to be deleted -->
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                    <div class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                        <span>📋</span>
+                        <span>Daftar Objek dan Relasi Terkait</span>
+                    </div>
+                    <div class="text-xs text-slate-700 max-h-56 overflow-y-auto custom-admin-scroll pr-1 delete-tree">
+                        {% for deletable_object in deletable_objects %}
+                            <ul class="list-disc list-inside space-y-1 font-medium mb-2">{{ deletable_object|unordered_list }}</ul>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Warning Callout -->
+                <div class="text-xs text-rose-700 bg-rose-50/80 border border-rose-200 rounded-xl p-3 flex items-start gap-2">
+                    <span class="flex-shrink-0 text-sm">⚠️</span>
+                    <span>Tindakan ini tidak dapat dibatalkan. Pastikan Anda telah memeriksa daftar di atas dengan seksama.</span>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <form method="post" class="m-0 p-0">{% csrf_token %}
+                {% for obj in queryset %}
+                <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}">
+                {% endfor %}
+                <input type="hidden" name="action" value="delete_selected">
+                <input type="hidden" name="post" value="yes">
+                
+                <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                    <a href="{% url opts|admin_urlname:'changelist' %}" 
+                       class="w-full sm:flex-1 h-11 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors shadow-xs">
+                        ✕ Batal & Kembali
+                    </a>
+                    <button type="submit" 
+                            class="w-full sm:flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-extrabold text-xs shadow-md shadow-brand-600/25 transition-all">
+                        <span>🗑️</span>
+                        <span>Ya, Saya Yakin Hapus Semua</span>
+                    </button>
+                </div>
+            </form>
+        {% endif %}
+
+    </div>
+</div>
+
+<style>
+.delete-tree ul {
+    margin-left: 1.25rem;
+    list-style-type: disc;
+}
+.delete-tree li {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+</style>
+{% endblock %}
